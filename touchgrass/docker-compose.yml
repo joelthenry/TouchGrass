@@ -1,0 +1,55 @@
+version: '3.8'
+
+services:
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
+    environment:
+      - REACT_APP_API_URL=http://backend:5000
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    ports:
+      - "5000:5000"
+    depends_on:
+      - database
+      - ai-service
+    environment:
+      - DATABASE_URL=mysql://user:password@database/dbname
+      - AI_SERVICE_URL=http://ai-service:5001
+    volumes:
+      - uploads:/uploads
+
+  ai-service:
+    build:
+      context: ./ai-service
+      dockerfile: Dockerfile
+    ports:
+      - "5001:5001"
+    volumes:
+      - uploads:/uploads
+
+  database:
+    build:
+      context: ./database
+      dockerfile: Dockerfile
+    ports:
+      - "3306:3306"
+    environment:
+      - MYSQL_ROOT_PASSWORD=root
+      - MYSQL_DATABASE=dbname
+      - MYSQL_USER=user
+      - MYSQL_PASSWORD=password
+    volumes:
+      - db_data:/var/lib/mysql
+
+volumes:
+  db_data:
+  uploads:
