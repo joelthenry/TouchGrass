@@ -1,28 +1,30 @@
 import mysql.connector
 
 
+def add_user(name: str, email: str, password: str):
+    query = "INSERT INTO users (name, email, password) VALUES (%s, %s, %s)"
+    values = (name, email, password)
+    cursor.execute(query, values)
+    connection.commit()
+
+
 db_config = {
-    "host": "localhost",
-    "user": "eyalahat@gmail.com",
-    "password": "Eyallahat1??"
+    "host": "Dell_Eyal",
+    "user": "eyalahat",
+    "password": "Eyallahat1??",
+    "database": "flower_users"
 }
 
 connection = mysql.connector.connect(**db_config)
 cursor = connection.cursor()
 
-cursor.execute("CREATE DATABASE IF NOT EXISTS user.db")
-cursor.execute("USE user.db")
 
-cursor.execute('''
-CREATE TABLE IF NOT EXISTS users (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    name VARCHAR(255) NOT NULL,
-    email VARCHAR(255) UNIQUE NOT NULL,
-    password VARCHAR(255) NOT NULL
-)
-''')
-
-cursor.close()
-connection.close()
+def main():
+    add_user("Curtis Predum", "curtis.predom@gmail.com", "CUh11")
+    cursor.execute("USE flower_users")
+    cursor.close()
+    connection.close()
 
 
+if __name__ == "__main__":
+    main()
