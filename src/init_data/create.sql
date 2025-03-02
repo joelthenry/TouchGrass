@@ -9,9 +9,15 @@ CREATE TABLE IF NOT EXISTS users (
 CREATE TABLE posts (
     id SERIAL PRIMARY KEY,
     img TEXT,
-    text VARCHAR(500),
+    flower_id BIGINT NOT NULL,
     user_id BIGINT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS Flowers ( 
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(50) NOT NULL,
 );
 
 ALTER TABLE posts
 ADD CONSTRAINT user_id FOREIGN KEY (user_id) REFERENCES users (id);
+ADD CONSTRAINT flower_id FOREIGN KEY (flower_id) REFERENCES flowers (id);

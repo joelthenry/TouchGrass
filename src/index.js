@@ -17,6 +17,15 @@ const hbs = handlebars.create({
     extname: 'hbs',
     layoutsDir: __dirname + '/views/layouts',
     partialsDir: __dirname + '/views/partials',
+    helpers: {
+        if_eq: function(a, b, opts) {
+            if (a === b) {
+                return opts.fn(this);
+            } else {
+                return opts.inverse(this);
+            }
+        }
+    }
 });
 
 // database configuration
@@ -68,6 +77,15 @@ app.get('/welcome', (req, res) => {
 
 app.get('/', (req, res) => {
     res.redirect('/home');
+});
+
+app.get('/logout', (req, res) => {
+    req.session.destroy();
+    res.redirect('/home');
+});
+
+app.get('/profile', (req, res) => {
+    res.render('pages/profile');
 });
 
 // Define the login route
