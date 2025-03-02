@@ -1,531 +1,596 @@
-<!-- Add Leaflet CSS and JS for maps -->
+<!-- Essential imports -->
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lora:wght@400;600&family=Poppins:wght@300;500&display=swap">
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
 <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
 
-<div class="flower-app-profile">
-    <div class="profile-header">
-        <div class="profile-cover">
-            <div class="profile-avatar">
-                {{#if user.avatar}}
-                    <img src="{{user.avatar}}" alt="{{user.username}}" class="avatar-image">
-                {{else}}
-                    <div class="avatar-placeholder">
-                        <i class="fa fa-user"></i>
-                    </div>
-                {{/if}}
+<div class="profile-page">
+    <div class="profile-container">
+        <!-- Header with avatar -->
+        <div class="profile-header">
+            <div class="avatar">
+                {{#if user.avatar}}<img src="{{user.avatar}}" alt="{{user.username}}">
+                {{else}}<div class="avatar-placeholder"><i class="fa fa-seedling"></i></div>{{/if}}
+                <h1>{{user.username}}</h1>
+                <p class="tagline">Botanical Explorer</p>
             </div>
-        </div>
-        
-        <div class="profile-info">
-            <h1>{{user.username}}</h1>
-            <p class="profile-email">{{user.email}}</p>
             
-            <div class="profile-stats">
-                <div class="stat-item">
-                    <span class="stat-value">{{user.discoveryCount}}</span>
-                    <span class="stat-label">Discoveries</span>
-                </div>
-                <div class="stat-item">
-                    <span class="stat-value">{{user.collectionCount}}</span>
-                    <span class="stat-label">Collection</span>
-                </div>
-                <div class="stat-item">
-                    <span class="stat-value">{{user.badgeCount}}</span>
-                    <span class="stat-label">Badges</span>
-                </div>
+            <!-- Stats row -->
+            <div class="stats">
+                <div class="stat"><span>{{user.discoveryCount}}</span><label>Discoveries</label></div>
+                <div class="stat"><span>{{user.collectionCount}}</span><label>Collection</label></div>
+                <div class="stat"><span>{{user.badgeCount}}</span><label>Badges</label></div>
             </div>
         </div>
-    </div>
-    
-    <div class="profile-content">
-        <div class="section-tabs">
-            <button class="tab-button active" data-tab="discoveries">My Discoveries</button>
-            <button class="tab-button" data-tab="collection">Collection</button>
+        
+        <!-- Tabs -->
+        <div class="tabs">
+            <button class="tab active" data-tab="discoveries"><i class="fa fa-compass"></i> Discoveries</button>
+            <button class="tab" data-tab="collection"><i class="fa fa-book-open"></i> Collection</button>
         </div>
         
-        <div class="tab-content" id="discoveries-tab">
+        <!-- Discoveries tab -->
+        <div class="tab-content visible" id="discoveries-tab">
             {{#if user.discoveries.length}}
-                <div class="discoveries-list">
+                <div class="items">
                     {{#each user.discoveries}}
-                        <div class="discovery-item" 
-                             data-lat="{{this.latitude}}" 
-                             data-lng="{{this.longitude}}" 
-                             data-name="{{this.name}}" 
-                             data-date="{{this.date}}">
-                            <div class="flower-icon">
-                                <i class="fa fa-seedling"></i>
-                            </div>
-                            <div class="discovery-info">
+                        <div class="card" data-lat="{{this.latitude}}" data-lng="{{this.longitude}}" data-name="{{this.name}}" data-date="{{this.date}}">
+                            <div class="icon {{toLowerCase this.name}}"><i class="fa fa-seedling"></i></div>
+                            <div class="details">
                                 <h3>{{this.name}}</h3>
-                                <p class="discovery-date">{{this.date}}</p>
-                                <p class="discovery-location"><i class="fa fa-map-marker-alt"></i> {{this.location}}</p>
+                                <div class="meta">
+                                    <span><i class="fa fa-calendar"></i> {{this.date}}</span>
+                                    <span><i class="fa fa-map-pin"></i> {{this.location}}</span>
+                                </div>
                             </div>
-                            <div class="discovery-action">
-                                <i class="fa fa-map-pin"></i>
-                            </div>
+                            <div class="actions"><i class="fa fa-map-marked-alt"></i></div>
                         </div>
                     {{/each}}
                 </div>
             {{else}}
-                <div class="empty-state">
-                    <i class="fa fa-leaf"></i>
-                    <p>You haven't discovered any flowers yet</p>
-                    <a href="/identify" class="btn-secondary">Identify Flowers</a>
+                <div class="empty">
+                    <i class="fa fa-search"></i>
+                    <h3>No discoveries yet</h3>
+                    <p>Start identifying flowers around you</p>
+                    <a href="/identify" class="btn">Identify Flowers</a>
                 </div>
             {{/if}}
         </div>
         
-        <div class="tab-content hidden" id="collection-tab">
+        <!-- Collection tab -->
+        <div class="tab-content" id="collection-tab">
             {{#if user.collection.length}}
-                <div class="collection-list">
+                <div class="items">
                     {{#each user.collection}}
-                        <div class="collection-item">
-                            <div class="flower-type-icon">
-                                <i class="fa fa-flower"></i>
-                            </div>
-                            <div class="collection-info">
+                        <div class="card">
+                            <div class="icon {{toLowerCase this.name}}"><i class="fa fa-spa"></i></div>
+                            <div class="details">
                                 <h3>{{this.name}}</h3>
-                                <p class="collection-scientific">{{this.scientificName}}</p>
-                                <div class="collection-tags">
-                                    {{#each this.tags}}
-                                        <span class="tag">{{this}}</span>
-                                    {{/each}}
+                                <p class="scientific">{{this.scientificName}}</p>
+                                <div class="tags">
+                                    {{#each this.tags}}<span class="tag">{{this}}</span>{{/each}}
                                 </div>
                             </div>
                         </div>
                     {{/each}}
                 </div>
             {{else}}
-                <div class="empty-state">
+                <div class="empty">
                     <i class="fa fa-book"></i>
-                    <p>Your collection is empty</p>
-                    <a href="/explore" class="btn-secondary">Explore Flowers</a>
+                    <h3>Collection is empty</h3>
+                    <p>Discover flowers to build your collection</p>
+                    <a href="/explore" class="btn">Explore Flowers</a>
                 </div>
             {{/if}}
         </div>
+        
+        <a href="/logout" class="logout"><i class="fa fa-sign-out-alt"></i> Log out</a>
     </div>
     
-    <div class="profile-actions">
-        <a href="/settings" class="btn-outline"><i class="fa fa-cog"></i> Settings</a>
-        <a href="/logout" class="btn-outline logout-btn"><i class="fa fa-sign-out-alt"></i> Logout</a>
-    </div>
+    <!-- Bottom navigation -->
+    <nav class="nav">
+        <a href="/home"><i class="fa fa-home"></i><span>Home</span></a>
+        <a href="/identify" class="camera"><i class="fa fa-camera"></i></a>
+        <a href="/profile" class="active"><i class="fa fa-user"></i><span>Profile</span></a>
+    </nav>
     
-    <div class="bottom-nav">
-        <a href="/home" class="bottom-nav-item">
-            <i class="fa fa-home"></i>
-            <span>Home</span>
-        </a>
-        <a href="/identify" class="bottom-nav-item add-button">
-            <div class="add-icon">
-                <i class="fa fa-plus"></i>
-            </div>
-        </a>
-        <a href="/profile" class="bottom-nav-item active">
-            <i class="fa fa-user"></i>
-            <span>Profile</span>
-        </a>
-    </div>
-    
-    <div class="flower-decoration top-right"></div>
-    
-    <!-- Add Map Modal -->
-    <div id="map-modal" class="map-modal">
-        <div class="map-container">
-            <div class="map-header">
+    <!-- Map modal -->
+    <div id="map-modal" class="modal">
+        <div class="modal-content">
+            <header>
                 <h3 id="map-title">Flower Location</h3>
-                <button class="close-map-btn"><i class="fa fa-times"></i></button>
-            </div>
+                <button class="close"><i class="fa fa-times"></i></button>
+            </header>
             <div id="discovery-map"></div>
-            <div class="map-info">
-                <p id="map-flower-name"></p>
-                <p id="map-date"></p>
-                <p id="map-coordinates"></p>
-            </div>
+            <footer>
+                <div id="map-flower-name" class="flower-name"></div>
+                <div id="map-date" class="date"></div>
+                <div id="map-coordinates" class="coords"></div>
+            </footer>
         </div>
     </div>
 </div>
 
 <style>
-    /* Updated styles for image-less design */
-    .discoveries-list, .collection-list {
+    :root {
+        --primary: #4CAF50;
+        --primary-light: #80C683;
+        --secondary: #FFC107;
+        --text: #333;
+        --text-light: #757575;
+        --bg: #F9F9F9;
+        --card: #FFF;
+        --rose: #E91E63;
+        --tulip: #FF9800;
+        --daisy: #9C27B0;
+        --sunflower: #FFC107;
+        --dandelion: #FF9800;
+        --font-title: 'Lora', serif;
+        --font-body: 'Poppins', sans-serif;
+        --shadow: 0 2px 8px rgba(0,0,0,0.08);
+    }
+    
+    /* Base */
+    body {
+        background-color: var(--bg);
+        color: var(--text);
+        font-family: var(--font-body);
+        margin: 0;
+    }
+    
+    h1, h2, h3 {
+        font-family: var(--font-title);
+        margin: 0;
+    }
+    
+    /* Layout */
+    .profile-page {
+        min-height: 100vh;
+        padding-bottom: 70px;
+        position: relative;
+    }
+    
+    .profile-container {
+        max-width: 550px;
+        margin: 0 auto;
+        padding: 16px;
+    }
+    
+    /* Header */
+    .profile-header {
+        text-align: center;
+        padding: 20px 0;
+    }
+    
+    .avatar {
         display: flex;
         flex-direction: column;
-        gap: 15px;
-        padding: 10px 0;
+        align-items: center;
     }
     
-    .discovery-item, .collection-item {
+    .avatar-placeholder, .avatar img {
+        width: 100px;
+        height: 100px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, var(--primary-light), var(--primary));
+        color: white;
         display: flex;
         align-items: center;
-        padding: 15px;
-        background-color: #fff;
-        border-radius: 12px;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        justify-content: center;
+        font-size: 36px;
+        margin-bottom: 12px;
+        box-shadow: var(--shadow);
+        border: 3px solid white;
+        object-fit: cover;
     }
     
-    .flower-icon, .flower-type-icon {
-        width: 50px;
-        height: 50px;
+    .avatar h1 {
+        font-size: 22px;
+        margin: 4px 0;
+    }
+    
+    .tagline {
+        color: var(--text-light);
+        font-size: 14px;
+        margin: 0 0 16px;
+    }
+    
+    .stats {
+        display: flex;
+        justify-content: center;
+        gap: 24px;
+        margin: 16px 0;
+    }
+    
+    .stat {
+        text-align: center;
+    }
+    
+    .stat span {
+        font-family: var(--font-title);
+        font-size: 24px;
+        color: var(--primary);
+        font-weight: 600;
+        display: block;
+    }
+    
+    .stat label {
+        font-size: 12px;
+        color: var(--text-light);
+    }
+    
+    /* Tabs */
+    .tabs {
+        display: flex;
+        border-bottom: 1px solid rgba(0,0,0,0.08);
+        margin-bottom: 20px;
+    }
+    
+    .tab {
+        flex: 1;
+        background: none;
+        border: none;
+        padding: 12px;
+        font-family: var(--font-title);
+        font-size: 16px;
+        color: var(--text-light);
+        position: relative;
+        cursor: pointer;
+    }
+    
+    .tab.active {
+        color: var(--primary);
+    }
+    
+    .tab.active:after {
+        content: '';
+        position: absolute;
+        bottom: -1px;
+        left: 20%;
+        width: 60%;
+        height: 2px;
+        background: var(--primary);
+    }
+    
+    /* Tab content */
+    .tab-content {
+        display: none;
+    }
+    
+    .tab-content.visible {
+        display: block;
+        animation: fade 0.3s;
+    }
+    
+    @keyframes fade {
+        from { opacity: 0; }
+        to { opacity: 1; }
+    }
+    
+    /* Cards */
+    .items {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+    }
+    
+    .card {
+        display: flex;
+        align-items: center;
+        background: var(--card);
+        border-radius: 12px;
+        padding: 14px;
+        box-shadow: var(--shadow);
+        transition: all 0.2s;
+        cursor: pointer;
+    }
+    
+    .card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.12);
+    }
+    
+    .icon {
+        width: 46px;
+        height: 46px;
+        border-radius: 50%;
+        background: var(--primary);
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 18px;
+        margin-right: 14px;
+        flex-shrink: 0;
+    }
+    
+    /* Flower colors */
+    .icon.rose { background: var(--rose); }
+    .icon.tulip { background: var(--tulip); }
+    .icon.daisy { background: var(--daisy); }
+    .icon.sunflower { background: var(--sunflower); }
+    .icon.dandelion { background: var(--dandelion); }
+    
+    .details {
+        flex: 1;
+    }
+    
+    .details h3 {
+        font-size: 16px;
+        margin-bottom: 4px;
+    }
+    
+    .meta {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+    }
+    
+    .meta span {
+        font-size: 12px;
+        color: var(--text-light);
+        display: flex;
+        align-items: center;
+        gap: 5px;
+    }
+    
+    .scientific {
+        font-style: italic;
+        color: var(--text-light);
+        font-size: 13px;
+        margin: 2px 0 8px;
+    }
+    
+    .tags {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 4px;
+    }
+    
+    .tag {
+        background: rgba(76,175,80,0.1);
+        color: var(--primary);
+        font-size: 11px;
+        padding: 2px 8px;
+        border-radius: 12px;
+    }
+    
+    .actions {
+        color: var(--primary);
+    }
+    
+    /* Empty states */
+    .empty {
+        text-align: center;
+        padding: 40px 20px;
+    }
+    
+    .empty i {
+        font-size: 32px;
+        color: var(--primary);
+        margin-bottom: 16px;
+    }
+    
+    .empty h3 {
+        margin-bottom: 8px;
+    }
+    
+    .empty p {
+        color: var(--text-light);
+        margin-bottom: 20px;
+    }
+    
+    .btn {
+        background: var(--primary);
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        border-radius: 8px;
+        font-weight: 500;
+        text-decoration: none;
+        display: inline-block;
+    }
+    
+    /* Logout */
+    .logout {
+        display: block;
+        text-align: center;
+        margin-top: 30px;
+        color: var(--text-light);
+        text-decoration: none;
+    }
+    
+    /* Bottom nav */
+    .nav {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 60px;
+        background: white;
+        display: flex;
+        justify-content: space-around;
+        align-items: center;
+        box-shadow: 0 -2px 8px rgba(0,0,0,0.06);
+    }
+    
+    .nav a {
+        color: var(--text-light);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        text-decoration: none;
+        font-size: 12px;
+        flex: 1;
+    }
+    
+    .nav a.active {
+        color: var(--primary);
+    }
+    
+    .nav i {
+        font-size: 20px;
+        margin-bottom: 4px;
+    }
+    
+    .camera {
+        transform: translateY(-15px);
+    }
+    
+    .camera i {
+        background: var(--primary);
+        width: 46px;
+        height: 46px;
         border-radius: 50%;
         display: flex;
         align-items: center;
         justify-content: center;
-        margin-right: 15px;
-        font-size: 24px;
+        color: white;
+        box-shadow: 0 4px 8px rgba(76,175,80,0.3);
     }
     
-    .flower-icon {
-        background-color: #e8f5e9;
-        color: #4caf50;
-    }
-    
-    .flower-type-icon {
-        background-color: #e3f2fd;
-        color: #2196f3;
-    }
-    
-    .discovery-info, .collection-info {
-        flex: 1;
-    }
-    
-    .discovery-info h3, .collection-info h3 {
-        margin: 0 0 5px 0;
-        font-size: 18px;
-        font-weight: 600;
-    }
-    
-    .discovery-date {
-        font-size: 14px;
-        color: #666;
-        margin: 0 0 5px 0;
-    }
-    
-    .discovery-location {
-        font-size: 14px;
-        color: #555;
-        display: flex;
-        align-items: center;
-        gap: 5px;
-    }
-    
-    .collection-scientific {
-        font-style: italic;
-        color: #666;
-        margin: 0 0 8px 0;
-        font-size: 14px;
-    }
-    
-    .collection-tags {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 5px;
-    }
-    
-    .tag {
-        background-color: #f1f1f1;
-        color: #555;
-        padding: 4px 8px;
-        border-radius: 12px;
-        font-size: 12px;
-    }
-    
-    /* Alternatively, use flower colors to identify different species */
-    .flower-rose {
-        background-color: #ffebee;
-        color: #e91e63;
-    }
-    
-    .flower-tulip {
-        background-color: #fff8e1;
-        color: #ffc107;
-    }
-    
-    .flower-daisy {
-        background-color: #f3e5f5;
-        color: #9c27b0;
-    }
-    
-    .flower-sunflower {
-        background-color: #fffde7;
-        color: #ffc107;
-    }
-    
-    .flower-dandelion {
-        background-color: #fff3e0;
-        color: #ff9800;
-    }
-    
-    .discovery-item {
-        display: flex;
-        align-items: center;
-        padding: 15px;
-        background-color: #fff;
-        border-radius: 12px;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-        cursor: pointer;
-        position: relative;
-        transition: transform 0.2s, box-shadow 0.2s;
-    }
-    
-    .discovery-item:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-    }
-    
-    .discovery-action {
-        color: #4caf50;
-        width: 30px;
-        height: 30px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-    }
-    
-    /* Map Modal Styles */
-    .map-modal {
+    /* Map modal */
+    .modal {
         position: fixed;
         top: 0;
         left: 0;
         width: 100%;
         height: 100%;
-        background-color: rgba(0,0,0,0.6);
-        z-index: 1000;
+        background: rgba(0,0,0,0.5);
+        backdrop-filter: blur(4px);
+        z-index: 100;
         display: none;
         align-items: center;
         justify-content: center;
     }
     
-    .map-modal.active {
+    .modal.active {
         display: flex;
     }
     
-    .map-container {
-        background-color: white;
+    .modal-content {
         width: 90%;
-        max-width: 600px;
-        border-radius: 12px;
+        max-width: 500px;
+        background: white;
+        border-radius: 16px;
         overflow: hidden;
-        box-shadow: 0 4px 20px rgba(0,0,0,0.25);
-        display: flex;
-        flex-direction: column;
+        box-shadow: 0 8px 30px rgba(0,0,0,0.15);
     }
     
-    .map-header {
-        padding: 15px;
+    .modal-content header {
         display: flex;
         justify-content: space-between;
-        align-items: center;
-        border-bottom: 1px solid #eee;
+        padding: 16px;
+        border-bottom: 1px solid rgba(0,0,0,0.05);
     }
     
-    .map-header h3 {
-        margin: 0;
-        font-size: 18px;
-        color: #333;
-    }
-    
-    .close-map-btn {
+    .close {
         background: none;
         border: none;
-        font-size: 20px;
+        font-size: 18px;
         cursor: pointer;
-        color: #666;
     }
     
     #discovery-map {
-        height: 300px;
-        width: 100%;
+        height: 280px;
     }
     
-    .map-info {
-        padding: 15px;
-        background-color: #f9f9f9;
+    .modal-content footer {
+        padding: 12px 16px;
+        background: #f5f5f5;
     }
     
-    .map-info p {
-        margin: 5px 0;
-        font-size: 14px;
+    .flower-name {
+        font-weight: 500;
+        color: var(--primary);
+        margin-bottom: 6px;
+    }
+    
+    .date, .coords {
+        font-size: 13px;
+        color: var(--text-light);
+        margin-bottom: 4px;
     }
 </style>
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    const tabButtons = document.querySelectorAll('.tab-button');
-    const tabContents = document.querySelectorAll('.tab-content');
-    
-    tabButtons.forEach(button => {
-        button.addEventListener('click', function() {
-            const tabId = this.getAttribute('data-tab');
+    // Register Handlebars helper
+    if (typeof Handlebars !== 'undefined') {
+        Handlebars.registerHelper('toLowerCase', str => str.toLowerCase());
+    }
+
+    // Tab switching
+    document.querySelectorAll('.tab').forEach(tab => {
+        tab.addEventListener('click', () => {
+            const tabId = tab.getAttribute('data-tab');
             
-            // Remove active class from all buttons and hide all content
-            tabButtons.forEach(btn => btn.classList.remove('active'));
-            tabContents.forEach(content => content.classList.add('hidden'));
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('visible'));
             
-            // Add active class to clicked button and show corresponding content
-            this.classList.add('active');
-            document.getElementById(tabId + '-tab').classList.remove('hidden');
+            tab.classList.add('active');
+            document.getElementById(`${tabId}-tab`).classList.add('visible');
         });
     });
-    
-    // Color-code flowers based on their names
-    const flowerIcons = document.querySelectorAll('.flower-icon, .flower-type-icon');
-    flowerIcons.forEach(icon => {
-        const flowerName = icon.nextElementSibling.querySelector('h3').textContent.toLowerCase();
-        
-        // Add specific class based on flower name
-        if (flowerName.includes('rose')) icon.classList.add('flower-rose');
-        else if (flowerName.includes('tulip')) icon.classList.add('flower-tulip');
-        else if (flowerName.includes('daisy')) icon.classList.add('flower-daisy');
-        else if (flowerName.includes('sunflower')) icon.classList.add('flower-sunflower');
-        else if (flowerName.includes('dandelion')) icon.classList.add('flower-dandelion');
-    });
-    
-    // Map Modal Functionality - COMPLETELY REWRITTEN
+
+    // Map functionality
+    let map = null;
     const mapModal = document.getElementById('map-modal');
-    const closeMapBtn = document.querySelector('.close-map-btn');
-    let currentMap = null; // We'll create a new one each time
+    const closeBtn = document.querySelector('.close');
     
-    // Function to safely destroy any map
-    function destroyMap() {
-        try {
-            if (currentMap) {
-                currentMap.off();
-                currentMap.remove();
-                currentMap = null;
-            }
+    // Show map for discovery
+    document.querySelectorAll('.card').forEach(card => {
+        card.addEventListener('click', () => {
+            const lat = parseFloat(card.getAttribute('data-lat'));
+            const lng = parseFloat(card.getAttribute('data-lng'));
+            const name = card.getAttribute('data-name');
+            const date = card.getAttribute('data-date');
             
-            // Also remove the map container to be extra safe
-            const oldMapContainer = document.getElementById('discovery-map-container');
-            if (oldMapContainer) {
-                oldMapContainer.innerHTML = '';
-            }
-        } catch (err) {
-            console.error('Error destroying map:', err);
-        }
-    }
-    
-    // This will be called when user clicks on a discovery
-    function showMapModal(lat, lng, flowerName, date) {
-        console.log('Showing map for:', { lat, lng, flowerName, date });
-        
-        try {
-            // First, destroy any existing map
-            destroyMap();
-            
-            // Update info text
-            document.getElementById('map-flower-name').textContent = `Flower: ${flowerName}`;
-            document.getElementById('map-date').textContent = `Discovered: ${date}`;
-            document.getElementById('map-coordinates').textContent = `Location: ${lat.toFixed(4)}, ${lng.toFixed(4)}`;
-            document.getElementById('map-title').textContent = `${flowerName} Location`;
-            
-            // Show the modal first
-            mapModal.classList.add('active');
-            
-            // Wait a moment before creating the map (let the modal render first)
-            setTimeout(() => {
-                try {
-                    // Get the existing container
-                    const mapContainer = document.querySelector('.map-container');
-                    const existingMapDiv = document.getElementById('discovery-map');
-                    
-                    // Remove it completely if it exists
-                    if (existingMapDiv) {
-                        existingMapDiv.parentNode.removeChild(existingMapDiv);
-                    }
-                    
-                    // Create a wrapper div with a unique ID each time
-                    const mapWrapperDiv = document.createElement('div');
-                    mapWrapperDiv.id = 'discovery-map-container';
-                    mapWrapperDiv.style.position = 'relative';
-                    
-                    // Create a completely new map div with a unique ID based on timestamp
-                    const newMapId = 'map-' + Date.now();
-                    const newMapDiv = document.createElement('div');
-                    newMapDiv.id = newMapId;
-                    newMapDiv.style.height = '300px';
-                    newMapDiv.style.width = '100%';
-                    
-                    // Append the new map div to the wrapper
-                    mapWrapperDiv.appendChild(newMapDiv);
-                    
-                    // Insert the wrapper between header and info
-                    const mapInfo = mapContainer.querySelector('.map-info');
-                    mapContainer.insertBefore(mapWrapperDiv, mapInfo);
-                    
-                    // Create a new map with the unique ID
-                    console.log('Creating new map with ID:', newMapId);
-                    currentMap = L.map(newMapId, {
-                        center: [lat, lng],
-                        zoom: 14,
-                        zoomControl: true,
-                        attributionControl: true
-                    });
-                    
-                    // Add the tile layer
-                    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-                    }).addTo(currentMap);
-                    
-                    // Add marker
-                    L.marker([lat, lng]).addTo(currentMap);
-                    
-                    // Make sure the map renders correctly
-                    currentMap.invalidateSize();
-                    
-                } catch (innerError) {
-                    console.error('Error creating map:', innerError);
-                    document.getElementById('map-flower-name').textContent = 'Error: Could not create map';
-                }
-            }, 300);
-            
-        } catch (error) {
-            console.error('Map initialization error:', error);
-            document.getElementById('map-title').textContent = 'Error Loading Map';
-            document.getElementById('map-flower-name').textContent = 'Could not load map data: ' + error.message;
-        }
-    }
-    
-    // Add click event to discovery items
-    const discoveryItems = document.querySelectorAll('.discovery-item');
-    console.log('Found', discoveryItems.length, 'discovery items');
-    
-    discoveryItems.forEach((item, index) => {
-        item.addEventListener('click', function() {
-            const lat = parseFloat(this.getAttribute('data-lat'));
-            const lng = parseFloat(this.getAttribute('data-lng'));
-            const name = this.getAttribute('data-name');
-            const date = this.getAttribute('data-date');
-            
-            // Only show map if coordinates exist
             if (!isNaN(lat) && !isNaN(lng)) {
-                showMapModal(lat, lng, name, date);
+                showMap(lat, lng, name, date);
             } else {
                 document.getElementById('map-title').textContent = 'No Location Data';
-                document.getElementById('map-flower-name').textContent = 'This discovery has no location information';
-                document.getElementById('map-date').textContent = date;
+                document.getElementById('map-flower-name').textContent = name;
+                document.getElementById('map-date').textContent = date || '';
                 document.getElementById('map-coordinates').textContent = '';
                 mapModal.classList.add('active');
             }
         });
     });
     
-    // Close map modal and destroy the map
-    function closeMapModal() {
-        mapModal.classList.remove('active');
-        setTimeout(destroyMap, 300);
-    }
-    
-    // Close map modal when clicking the close button
-    closeMapBtn.addEventListener('click', closeMapModal);
-    
-    // Close map modal when clicking outside the map container
-    mapModal.addEventListener('click', function(e) {
-        if (e.target === mapModal) {
-            closeMapModal();
-        }
+    // Close modal
+    closeBtn.addEventListener('click', () => mapModal.classList.remove('active'));
+    mapModal.addEventListener('click', e => {
+        if (e.target === mapModal) mapModal.classList.remove('active');
     });
     
-    // Also destroy map when the page unloads
-    window.addEventListener('beforeunload', destroyMap);
+    // Show map with location
+    function showMap(lat, lng, flowerName, date) {
+        document.getElementById('map-flower-name').textContent = flowerName;
+        document.getElementById('map-date').textContent = `Discovered: ${date}`;
+        document.getElementById('map-coordinates').textContent = `${lat.toFixed(4)}, ${lng.toFixed(4)}`;
+        
+        mapModal.classList.add('active');
+        
+        setTimeout(() => {
+            const mapDiv = document.getElementById('discovery-map');
+            mapDiv.innerHTML = '';
+            
+            const newMapId = 'map-' + Date.now();
+            const newMapEl = document.createElement('div');
+            newMapEl.id = newMapId;
+            newMapEl.style.height = '100%';
+            mapDiv.appendChild(newMapEl);
+            
+            if (map) map.remove();
+            
+            map = L.map(newMapId).setView([lat, lng], 14);
+            
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '&copy; OpenStreetMap contributors'
+            }).addTo(map);
+            
+            L.marker([lat, lng]).addTo(map);
+        }, 100);
+    }
 });
 </script>

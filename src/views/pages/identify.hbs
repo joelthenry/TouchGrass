@@ -1,210 +1,569 @@
-<div class="flower-app-identify">
-    <div class="flower-header small">
-        <h1>Identify a Flower</h1>
-        <p class="tagline">Take a clear photo of a flower to identify it</p>
-    </div>
-    
-    <div class="camera-container">
-        <!-- Camera view -->
-        <div id="camera-view">
-            <video id="camera-stream" autoplay playsinline></video>
-            
-            <div class="camera-options">
-                <button id="start-camera" class="btn-primary">
-                    <i class="fa fa-camera"></i> Enable Camera
-                </button>
-                
-                <div class="option-divider">
-                    <span>OR</span>
-                </div>
-                
-                <label for="file-upload" class="btn-secondary file-upload-btn">
-                    <i class="fa fa-upload"></i> Upload Photo
-                </label>
-                <input type="file" id="file-upload" accept="image/*" style="display: none;">
-            </div>
-            
-            <div id="camera-status"></div>
-            <button id="capture-btn" class="capture-button hidden">
-                <div class="capture-icon"></div>
-            </button>
+<!-- Essential imports -->
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lora:wght@400;600&family=Poppins:wght@300;500&display=swap">
+
+<div class="identify-page">
+    <div class="identify-container">
+        <div class="page-header">
+            <h1>Identify a Flower</h1>
+            <p class="tagline">Take a clear photo for best results</p>
         </div>
         
-        <!-- Photo preview -->
-        <div id="photo-preview" class="hidden">
-            <canvas id="photo-canvas"></canvas>
-            <div class="preview-controls">
-                <button id="retake-btn" class="btn-outline">
-                    <i class="fa fa-redo"></i> Retake
-                </button>
-                <button id="save-btn" class="btn-primary">
-                    <i class="fa fa-save"></i> Save Photo
+        <div class="camera-container">
+            <!-- Camera view -->
+            <div id="camera-view">
+                <video id="camera-stream" autoplay playsinline></video>
+                
+                <div class="camera-options">
+                    <button id="start-camera" class="btn">
+                        <i class="fa fa-camera"></i> Enable Camera
+                    </button>
+                    
+                    <div class="divider"><span>OR</span></div>
+                    
+                    <label for="file-upload" class="btn-outline">
+                        <i class="fa fa-image"></i> Upload Photo
+                    </label>
+                    <input type="file" id="file-upload" accept="image/*" hidden>
+                </div>
+                
+                <div id="status-message"></div>
+                <button id="capture-btn" class="capture-btn hidden">
+                    <div class="capture-ring"></div>
                 </button>
             </div>
+            
+            <!-- Photo preview -->
+            <div id="photo-preview" class="hidden">
+                <canvas id="photo-canvas"></canvas>
+                
+                <div id="result-container" class="hidden">
+                    <div class="result-card">
+                        <div class="flower-icon">
+                            <i class="fa fa-spa"></i>
+                        </div>
+                        <div class="result-info">
+                            <h3 id="result-name">Identifying...</h3>
+                            <p id="result-confidence"></p>
+                            <p id="result-message"></p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="preview-actions">
+                    <button id="retake-btn" class="btn-outline">
+                        <i class="fa fa-redo"></i> Retake
+                    </button>
+                    <button id="identify-btn" class="btn">
+                        <i class="fa fa-search"></i> Identify
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <div class="photo-tips">
+            <h3><i class="fa fa-lightbulb"></i> Tips for best results</h3>
+            <ul>
+                <li>Center the flower in your photo</li>
+                <li>Ensure good lighting conditions</li>
+                <li>Take the photo from a close distance</li>
+            </ul>
         </div>
     </div>
     
-    <div class="bottom-nav">
-        <a href="/home" class="bottom-nav-item">
-            <i class="fa fa-home"></i>
-            <span>Home</span>
-        </a>
-        <a href="/identify" class="bottom-nav-item add-button active">
-            <div class="add-icon">
-                <i class="fa fa-plus"></i>
-            </div>
-        </a>
-        <a href="/profile" class="bottom-nav-item">
-            <i class="fa fa-user"></i>
-            <span>Profile</span>
-        </a>
-    </div>
+    <!-- Bottom navigation -->
+    <nav class="nav">
+        <a href="/home"><i class="fa fa-home"></i><span>Home</span></a>
+        <a href="/identify" class="camera active"><i class="fa fa-camera"></i></a>
+        <a href="/profile"><i class="fa fa-user"></i><span>Profile</span></a>
+    </nav>
 </div>
 
-<script>
-// Inline script for maximum compatibility
-document.addEventListener('DOMContentLoaded', function() {
-    // Add this line to check if user is authenticated from the server-side template
-    const isAuthenticated = {{#if user}}true{{else}}false{{/if}};
-    console.log('Authentication status:', isAuthenticated ? 'Logged in' : 'Not logged in');
+<style>
+    :root {
+        --primary: #4CAF50;
+        --primary-light: #80C683;
+        --secondary: #FFC107;
+        --text: #333;
+        --text-light: #757575;
+        --bg: #F9F9F9;
+        --card: #FFF;
+        --rose: #E91E63;
+        --tulip: #FF9800;
+        --daisy: #9C27B0;
+        --sunflower: #FFC107;
+        --dandelion: #FF9800;
+        --font-title: 'Lora', serif;
+        --font-body: 'Poppins', sans-serif;
+        --shadow: 0 2px 8px rgba(0,0,0,0.08);
+    }
     
+    /* Base */
+    body {
+        background-color: var(--bg);
+        color: var(--text);
+        font-family: var(--font-body);
+        margin: 0;
+    }
+    
+    h1, h2, h3 {
+        font-family: var(--font-title);
+        margin: 0;
+    }
+    
+    /* Layout */
+    .identify-page {
+        min-height: 100vh;
+        padding-bottom: 70px;
+        position: relative;
+    }
+    
+    .identify-container {
+        max-width: 550px;
+        margin: 0 auto;
+        padding: 16px;
+    }
+    
+    /* Header */
+    .page-header {
+        text-align: center;
+        margin-bottom: 20px;
+    }
+    
+    .page-header h1 {
+        font-size: 24px;
+        margin-bottom: 4px;
+    }
+    
+    .tagline {
+        color: var(--text-light);
+        margin: 0;
+        font-size: 14px;
+    }
+    
+    /* Camera container */
+    .camera-container {
+        position: relative;
+        width: 100%;
+        height: 60vh;
+        background-color: #000;
+        border-radius: 16px;
+        overflow: hidden;
+        box-shadow: var(--shadow);
+        margin-bottom: 20px;
+    }
+    
+    #camera-view {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+    
+    #camera-stream {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: none;
+    }
+    
+    .camera-options {
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+        align-items: center;
+        background: rgba(0,0,0,0.7);
+        padding: 24px;
+        border-radius: 16px;
+        z-index: 5;
+    }
+    
+    .divider {
+        width: 100%;
+        display: flex;
+        align-items: center;
+        margin: 4px 0;
+        color: rgba(255,255,255,0.7);
+        font-size: 14px;
+    }
+    
+    .divider::before, .divider::after {
+        content: '';
+        flex: 1;
+        border-bottom: 1px solid rgba(255,255,255,0.3);
+    }
+    
+    .divider span {
+        padding: 0 10px;
+    }
+    
+    .btn {
+        background: var(--primary);
+        color: white;
+        border: none;
+        padding: 12px 24px;
+        border-radius: 8px;
+        font-size: 16px;
+        font-weight: 500;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        transition: all 0.2s;
+        width: 100%;
+        justify-content: center;
+    }
+    
+    .btn:hover {
+        background: #43a047;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    }
+    
+    .btn-outline {
+        background: transparent;
+        color: white;
+        border: 1px solid rgba(255,255,255,0.8);
+        padding: 12px 24px;
+        border-radius: 8px;
+        font-size: 16px;
+        font-weight: 500;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        transition: all 0.2s;
+        width: 100%;
+        justify-content: center;
+    }
+    
+    .btn-outline:hover {
+        background: rgba(255,255,255,0.1);
+    }
+    
+    #status-message {
+        position: absolute;
+        bottom: 20px;
+        background: rgba(0,0,0,0.6);
+        color: white;
+        padding: 8px 16px;
+        border-radius: 20px;
+        font-size: 14px;
+        z-index: 5;
+    }
+    
+    .capture-btn {
+        position: absolute;
+        bottom: 30px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 70px;
+        height: 70px;
+        border-radius: 50%;
+        background: white;
+        border: none;
+        cursor: pointer;
+        z-index: 5;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    }
+    
+    .capture-ring {
+        width: 54px;
+        height: 54px;
+        border-radius: 50%;
+        border: 3px solid #333;
+        transition: all 0.2s;
+    }
+    
+    .capture-btn:active .capture-ring {
+        width: 48px;
+        height: 48px;
+    }
+    
+    /* Photo preview */
+    #photo-preview {
+        position: relative;
+        width: 100%;
+        height: 100%;
+    }
+    
+    #photo-canvas {
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+        background: #000;
+    }
+    
+    .preview-actions {
+        position: absolute;
+        bottom: 20px;
+        left: 0;
+        right: 0;
+        display: flex;
+        justify-content: center;
+        gap: 16px;
+        padding: 0 20px;
+        z-index: 5;
+    }
+    
+    .preview-actions button {
+        flex: 1;
+        max-width: 160px;
+    }
+    
+    /* Result display */
+    #result-container {
+        position: absolute;
+        top: 20px;
+        left: 0;
+        right: 0;
+        display: flex;
+        justify-content: center;
+        padding: 0 20px;
+        z-index: 5;
+    }
+    
+    .result-card {
+        background: white;
+        border-radius: 12px;
+        padding: 16px;
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+        max-width: 90%;
+    }
+    
+    .flower-icon {
+        width: 48px;
+        height: 48px;
+        border-radius: 50%;
+        background: var(--primary);
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 20px;
+        flex-shrink: 0;
+    }
+    
+    .result-info h3 {
+        margin-bottom: 4px;
+        font-size: 18px;
+    }
+    
+    .result-info p {
+        margin: 0;
+        font-size: 14px;
+        color: var(--text-light);
+    }
+    
+    /* Photo tips */
+    .photo-tips {
+        background: var(--card);
+        border-radius: 12px;
+        padding: 16px;
+        box-shadow: var(--shadow);
+    }
+    
+    .photo-tips h3 {
+        font-size: 16px;
+        margin-bottom: 12px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        color: var(--primary);
+    }
+    
+    .photo-tips ul {
+        margin: 0;
+        padding-left: 24px;
+    }
+    
+    .photo-tips li {
+        margin-bottom: 8px;
+        font-size: 14px;
+        color: var(--text-light);
+    }
+    
+    /* Bottom navigation */
+    .nav {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 60px;
+        background: white;
+        display: flex;
+        justify-content: space-around;
+        align-items: center;
+        box-shadow: 0 -2px 8px rgba(0,0,0,0.06);
+        z-index: 100;
+    }
+    
+    .nav a {
+        color: var(--text-light);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        text-decoration: none;
+        font-size: 12px;
+        flex: 1;
+    }
+    
+    .nav a.active {
+        color: var(--primary);
+    }
+    
+    .nav i {
+        font-size: 20px;
+        margin-bottom: 4px;
+    }
+    
+    .camera {
+        transform: translateY(-15px);
+    }
+    
+    .camera i {
+        background: var(--primary);
+        width: 46px;
+        height: 46px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        box-shadow: 0 4px 8px rgba(76,175,80,0.3);
+    }
+    
+    .hidden {
+        display: none !important;
+    }
+    
+    /* For flower types */
+    .flower-icon.rose { background: var(--rose); }
+    .flower-icon.tulip { background: var(--tulip); }
+    .flower-icon.daisy { background: var(--daisy); }
+    .flower-icon.sunflower { background: var(--sunflower); }
+    .flower-icon.dandelion { background: var(--dandelion); }
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Elements
     const videoElement = document.getElementById('camera-stream');
     const startButton = document.getElementById('start-camera');
-    const statusDiv = document.getElementById('camera-status');
     const captureBtn = document.getElementById('capture-btn');
+    const statusDiv = document.getElementById('status-message');
     const photoPreview = document.getElementById('photo-preview');
     const cameraView = document.getElementById('camera-view');
     const photoCanvas = document.getElementById('photo-canvas');
     const retakeBtn = document.getElementById('retake-btn');
-    const saveBtn = document.getElementById('save-btn');
+    const identifyBtn = document.getElementById('identify-btn');
     const fileUpload = document.getElementById('file-upload');
+    const resultContainer = document.getElementById('result-container');
+    const resultName = document.getElementById('result-name');
+    const resultConfidence = document.getElementById('result-confidence');
+    const resultMessage = document.getElementById('result-message');
     
+    // Authentication check
+    const isAuthenticated = {{#if user}}true{{else}}false{{/if}};
+    
+    // Variables
     let stream = null;
     let photoData = null;
-    let userLatitude = null;
-    let userLongitude = null;
+    let userLocation = { latitude: null, longitude: null };
     
-    // Initially hide the video until camera starts
-    videoElement.style.display = 'none';
-    captureBtn.classList.add('hidden');
+    // Get user location
+    function getLocation() {
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(
+                position => {
+                    userLocation.latitude = position.coords.latitude;
+                    userLocation.longitude = position.coords.longitude;
+                    console.log('Location acquired:', userLocation);
+                    showStatus('Location detected');
+                },
+                error => {
+                    console.log('Location error:', error);
+                }
+            );
+        }
+    }
     
-    // Function to update status
-    function updateStatus(message, isError = false) {
+    // Status message function
+    function showStatus(message, isError = false) {
         statusDiv.textContent = message;
-        statusDiv.style.color = isError ? 'red' : 'green';
+        statusDiv.style.color = isError ? '#ff5252' : 'white';
         console.log(message);
     }
     
-    // Get the user's location when the page loads
-    function getUserLocation() {
-        if (navigator.geolocation) {
-            navigator.geolocation.getCurrentPosition(
-                function(position) {
-                    userLatitude = position.coords.latitude;
-                    userLongitude = position.coords.longitude;
-                    console.log(`Location obtained: (${userLatitude}, ${userLongitude})`);
-                    updateStatus('Location detected');
-                },
-                function(error) {
-                    console.log('Error getting location:', error);
-                    updateStatus('Location not available', true);
-                }
-            );
-        } else {
-            console.log('Geolocation is not supported by this browser');
-        }
-    }
-
-    // Call this when the page loads
-    getUserLocation();
-    
-    // Start camera when button is clicked
+    // Start camera
     startButton.addEventListener('click', function() {
-        updateStatus('Requesting camera access...');
+        showStatus('Accessing camera...');
         
-        // Simple camera request
         if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
-            navigator.mediaDevices.getUserMedia({ 
-                video: { 
-                    facingMode: 'environment',  // Prefer rear camera
+            navigator.mediaDevices.getUserMedia({
+                video: {
+                    facingMode: 'environment',
                     width: { ideal: 1280 },
                     height: { ideal: 720 }
-                } 
+                }
             })
-                .then(function(streamObj) {
-                    stream = streamObj;
-                    videoElement.srcObject = stream;
-                    videoElement.style.display = 'block';
-                    
-                    // Hide the camera options
-                    document.querySelector('.camera-options').style.display = 'none';
-                    
-                    captureBtn.classList.remove('hidden');
-                    updateStatus('Camera active');
-                    
-                    // Log success
-                    console.log('Camera successfully started');
-                })
-                .catch(function(err) {
-                    updateStatus('Camera error: ' + err.name + ' - ' + err.message, true);
-                    console.error('Camera error:', err);
-                });
+            .then(streamObj => {
+                stream = streamObj;
+                videoElement.srcObject = stream;
+                videoElement.style.display = 'block';
+                
+                document.querySelector('.camera-options').style.display = 'none';
+                captureBtn.classList.remove('hidden');
+                
+                showStatus('Camera ready');
+            })
+            .catch(err => {
+                showStatus('Camera error: ' + err.message, true);
+                console.error('Camera error:', err);
+            });
         } else {
-            updateStatus('Your browser does not support camera access', true);
+            showStatus('Camera not supported on this device', true);
         }
     });
     
-    // Handle file upload
+    // File upload handler
     fileUpload.addEventListener('change', function(e) {
-        if (!e.target.files.length) return;
+        if (e.target.files.length === 0) return;
         
         const file = e.target.files[0];
-        
-        // Check if file is an image
         if (!file.type.startsWith('image/')) {
-            updateStatus('Please select an image file', true);
+            showStatus('Please select an image file', true);
             return;
         }
         
-        updateStatus('Processing uploaded image...');
-        
-        // Read the file as data URL
         const reader = new FileReader();
-        
-        reader.onload = function(event) {
-            // Create an image element to get dimensions
+        reader.onload = event => {
             const img = new Image();
-            
-            img.onload = function() {
-                // Get the uploaded image dimensions
-                const context = photoCanvas.getContext('2d');
+            img.onload = () => {
                 photoCanvas.width = img.width;
                 photoCanvas.height = img.height;
                 
-                // Draw the image to canvas
-                context.drawImage(img, 0, 0);
+                const ctx = photoCanvas.getContext('2d');
+                ctx.drawImage(img, 0, 0);
                 
-                // Save the photo data
                 photoData = photoCanvas.toDataURL('image/jpeg');
                 
-                // Show preview
                 cameraView.classList.add('hidden');
                 photoPreview.classList.remove('hidden');
                 
-                updateStatus('Image uploaded successfully');
-                
-                // Clear the file input for future uploads
-                fileUpload.value = '';
+                showStatus('Photo uploaded');
             };
             
             img.src = event.target.result;
-            
-            // Also save this as our photo data in case canvas processing fails
             photoData = event.target.result;
-        };
-        
-        reader.onerror = function() {
-            updateStatus('Error reading file', true);
         };
         
         reader.readAsDataURL(file);
@@ -213,328 +572,145 @@ document.addEventListener('DOMContentLoaded', function() {
     // Capture photo
     captureBtn.addEventListener('click', function() {
         if (!stream) {
-            updateStatus('Camera not active', true);
+            showStatus('Camera not active', true);
             return;
         }
         
         try {
-            // Create canvas and draw the current video frame
-            const context = photoCanvas.getContext('2d');
+            const ctx = photoCanvas.getContext('2d');
             photoCanvas.width = videoElement.videoWidth;
             photoCanvas.height = videoElement.videoHeight;
-            context.drawImage(videoElement, 0, 0, photoCanvas.width, photoCanvas.height);
             
-            // Save the photo data
+            ctx.drawImage(videoElement, 0, 0, photoCanvas.width, photoCanvas.height);
             photoData = photoCanvas.toDataURL('image/jpeg');
-            console.log("Captured photo data:", photoData.substring(0, 50) + "...");
+            
+            // Stop camera stream
+            stream.getTracks().forEach(track => track.stop());
             
             // Show preview
             cameraView.classList.add('hidden');
             photoPreview.classList.remove('hidden');
             
-            // Stop the camera stream
-            if (stream) {
-                stream.getTracks().forEach(track => track.stop());
-            }
-            
-            updateStatus('Photo captured');
+            showStatus('Photo captured');
         } catch (error) {
-            updateStatus('Error capturing photo: ' + error.message, true);
+            showStatus('Error capturing photo', true);
             console.error('Capture error:', error);
         }
     });
     
     // Retake photo
     retakeBtn.addEventListener('click', function() {
-        // Hide preview and show camera
         photoPreview.classList.add('hidden');
         cameraView.classList.remove('hidden');
         
-        // Show camera options again
         document.querySelector('.camera-options').style.display = 'flex';
-        
-        // Reset video and buttons
         videoElement.style.display = 'none';
         captureBtn.classList.add('hidden');
         
-        updateStatus('Ready to take a new photo');
+        resultContainer.classList.add('hidden');
+        
+        showStatus('Ready to take a new photo');
     });
     
-    // Save photo
-    saveBtn.addEventListener('click', function() {
+    // Identify flower
+    identifyBtn.addEventListener('click', function() {
         if (!photoData) {
-            updateStatus('No photo to save', true);
+            showStatus('No photo to analyze', true);
             return;
         }
         
-        updateStatus('Saving photo...');
-        saveBtn.disabled = true;
-        saveBtn.innerHTML = '<i class="fa fa-spinner fa-spin"></i> Saving...';
+        identifyBtn.disabled = true;
+        identifyBtn.innerHTML = '<i class="fa fa-spinner fa-spin"></i> Processing...';
+        showStatus('Identifying flower...');
         
-        // Save the photo to the server with location data
+        // Get current location
+        getLocation();
+        
         fetch('/api/save-photo', {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
+            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 image: photoData,
-                name: 'Captured Flower',
-                latitude: userLatitude,
-                longitude: userLongitude
+                latitude: userLocation.latitude,
+                longitude: userLocation.longitude
             })
         })
-        .then(response => {
-            console.log('Photo save response status:', response.status);
-            if (!response.ok) {
-                return response.text().then(text => {
-                    throw new Error(`HTTP error! status: ${response.status}, body: ${text}`);
-                });
-            }
-            return response.json();
-        })
+        .then(response => response.json())
         .then(data => {
-            console.log('Photo saved successfully:', data);
+            console.log('Identification result:', data);
             
-            // Show identification message
+            // Show flower identification result
+            resultContainer.classList.remove('hidden');
+            
             if (data.flowerName) {
+                // Set flower name class
+                const flowerIcon = document.querySelector('.flower-icon');
+                flowerIcon.className = 'flower-icon';
+                
+                const flowerName = data.flowerName.toLowerCase();
+                if (flowerName.includes('rose')) flowerIcon.classList.add('rose');
+                else if (flowerName.includes('tulip')) flowerIcon.classList.add('tulip');
+                else if (flowerName.includes('daisy')) flowerIcon.classList.add('daisy');
+                else if (flowerName.includes('sunflower')) flowerIcon.classList.add('sunflower');
+                else if (flowerName.includes('dandelion')) flowerIcon.classList.add('dandelion');
+                
+                // Display results
+                resultName.textContent = data.flowerName;
+                
                 const confidencePercent = data.confidence ? Math.round(data.confidence * 100) : null;
-                const confidenceText = confidencePercent ? ` (${confidencePercent}% confidence)` : '';
-                
-                updateStatus(`Identified as: ${data.flowerName}${confidenceText}!`);
-                
-                // Create a success message with the flower name
-                const successMessage = document.createElement('div');
-                successMessage.className = 'success-message';
-                
-                // Use the client-side isAuthenticated variable instead of data.savedToCollection
-                if (isAuthenticated && data.savedToCollection) {
-                    successMessage.innerHTML = `
-                        <div class="success-icon">✓</div>
-                        <div class="success-text">
-                            <h3>Flower Identified!</h3>
-                            <p>This appears to be a <strong>${data.flowerName}</strong>${confidenceText}</p>
-                            <p class="small-text">Saved to your collection</p>
-                        </div>
-                    `;
-                } else if (isAuthenticated) {
-                    successMessage.innerHTML = `
-                        <div class="success-icon">✓</div>
-                        <div class="success-text">
-                            <h3>Flower Identified!</h3>
-                            <p>This appears to be a <strong>${data.flowerName}</strong>${confidenceText}</p>
-                            <p class="small-text">Error saving to collection - please try again</p>
-                        </div>
-                    `;
+                if (confidencePercent) {
+                    resultConfidence.textContent = `Confidence: ${confidencePercent}%`;
                 } else {
-                    successMessage.innerHTML = `
-                        <div class="success-icon">✓</div>
-                        <div class="success-text">
-                            <h3>Flower Identified!</h3>
-                            <p>This appears to be a <strong>${data.flowerName}</strong>${confidenceText}</p>
-                            <p class="small-text">Log in to save this to your collection!</p>
-                        </div>
-                    `;
+                    resultConfidence.textContent = '';
                 }
                 
-                // Insert before the preview controls
-                photoPreview.insertBefore(successMessage, document.querySelector('.preview-controls'));
-                
-                // For anonymous users, add login/register button
-                if (!isAuthenticated) {
-                    const loginButtons = document.createElement('div');
-                    loginButtons.className = 'login-prompt';
-                    loginButtons.innerHTML = `
-                        <a href="/login" class="btn-secondary">Login</a>
-                        <a href="/register" class="btn-primary">Sign Up</a>
+                if (isAuthenticated && data.savedToCollection) {
+                    resultMessage.textContent = 'Added to your collection!';
+                } else if (isAuthenticated) {
+                    resultMessage.textContent = 'Unable to save to collection';
+                } else {
+                    resultMessage.textContent = 'Sign in to save to your collection';
+                    
+                    // Add login buttons for non-authenticated users
+                    const loginBtns = document.createElement('div');
+                    loginBtns.className = 'login-buttons';
+                    loginBtns.innerHTML = `
+                        <a href="/login" class="btn-outline login-btn">Login</a>
+                        <a href="/register" class="btn register-btn">Sign Up</a>
                     `;
-                    photoPreview.insertBefore(loginButtons, document.querySelector('.preview-controls'));
+                    
+                    resultMessage.appendChild(loginBtns);
+                }
+                
+                // Reset button state but change text
+                identifyBtn.disabled = false;
+                identifyBtn.innerHTML = '<i class="fa fa-check"></i> Identified';
+                
+                // Redirect authenticated users after a delay
+                if (isAuthenticated) {
+                    setTimeout(() => {
+                        window.location.href = '/profile';
+                    }, 3000);
                 }
             } else {
-                updateStatus('Photo saved successfully!');
-            }
-
-            // Redirect after a delay (for authenticated users) or show login options
-            if (isAuthenticated) {
-                setTimeout(() => {
-                    window.location.href = '/profile';
-                }, 3000);
-            } else {
-                // For anonymous users, update save button to allow retry
-                saveBtn.disabled = false;
-                saveBtn.innerHTML = '<i class="fa fa-save"></i> Save Photo';
-                retakeBtn.innerHTML = '<i class="fa fa-redo"></i> New Photo';
+                resultName.textContent = 'Unable to identify';
+                resultConfidence.textContent = '';
+                resultMessage.textContent = 'Please try again with a clearer photo';
+                
+                identifyBtn.disabled = false;
+                identifyBtn.innerHTML = '<i class="fa fa-search"></i> Try Again';
             }
         })
         .catch(error => {
-            updateStatus('Error: ' + error.message, true);
-            console.error('Save error:', error);
-            saveBtn.disabled = false;
-            saveBtn.innerHTML = '<i class="fa fa-save"></i> Save Photo';
+            console.error('Identification error:', error);
+            showStatus('Error identifying flower', true);
+            
+            identifyBtn.disabled = false;
+            identifyBtn.innerHTML = '<i class="fa fa-search"></i> Identify';
         });
     });
+    
+    // Initialize location tracking
+    getLocation();
 });
 </script>
-
-<style>
-/* Inline styles for simplicity */
-.camera-container {
-    position: relative;
-    width: 100%;
-    height: 70vh;
-    background-color: #000;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    overflow: hidden;
-    border-radius: 10px;
-    margin-bottom: 20px;
-}
-
-#camera-view {
-    position: relative;
-    width: 100%;
-    height: 100%;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-}
-
-#camera-stream {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-}
-
-.camera-options {
-    display: flex;
-    flex-direction: column;
-    gap: 20px;
-    align-items: center;
-    padding: 20px;
-    background-color: rgba(0,0,0,0.7);
-    border-radius: 12px;
-    max-width: 80%;
-    z-index: 10;
-}
-
-.option-divider {
-    display: flex;
-    align-items: center;
-    width: 100%;
-    margin: 5px 0;
-}
-
-.option-divider::before,
-<option-divider::after {
-    content: '';
-    flex: 1;
-    border-bottom: 1px solid rgba(255,255,255,0.3);
-}
-
-.option-divider span {
-    padding: 0 10px;
-    color: white;
-    font-size: 14px;
-}
-
-.file-upload-btn {
-    cursor: pointer;
-    width: 100%;
-    text-align: center;
-}
-
-#camera-status {
-    position: absolute;
-    bottom: 20px;
-    background-color: rgba(0,0,0,0.7);
-    color: white;
-    padding: 8px 16px;
-    border-radius: 20px;
-    font-size: 14px;
-    z-index: 10;
-}
-
-.capture-button {
-    position: absolute;
-    bottom: 30px;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 70px;
-    height: 70px;
-    border-radius: 50%;
-    background-color: white;
-    border: none;
-    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.3);
-    cursor: pointer;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    z-index: 10;
-}
-
-.capture-icon {
-    width: 54px;
-    height: 54px;
-    border-radius: 50%;
-    border: 3px solid #333;
-    background-color: white;
-    transition: all 0.2s ease;
-}
-
-.capture-button:active .capture-icon {
-    width: 48px;
-    height: 48px;
-}
-
-#photo-preview {
-    position: relative;
-    width: 100%;
-    height: 100%;
-}
-
-#photo-canvas {
-    width: 100%;
-    height: 100%;
-    object-fit: contain;
-    background-color: #000;
-}
-
-.preview-controls {
-    position: absolute;
-    bottom: 20px;
-    left: 0;
-    right: 0;
-    display: flex;
-    justify-content: space-around;
-    padding: 0 20px;
-}
-
-.preview-controls button {
-    padding: 10px 20px;
-    font-size: 16px;
-}
-
-.hidden {
-    display: none !important;
-}
-
-/* Add styles for login prompt */
-.login-prompt {
-    position: absolute;
-    bottom: 80px;
-    left: 0;
-    right: 0;
-    display: flex;
-    justify-content: center;
-    gap: 15px;
-    padding: 0 20px;
-}
-
-.login-prompt a {
-    flex: 1;
-    text-align: center;
-    max-width: 150px;
-}
-</style>

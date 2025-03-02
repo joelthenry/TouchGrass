@@ -1,86 +1,538 @@
-<div class="flower-app-home">
-    {{#if user}}
-        <div class="user-welcome">
+<!-- Essential imports -->
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lora:wght@400;600&family=Poppins:wght@300;500&display=swap">
+
+<div class="home-page">
+    <div class="home-container">
+        {{#if user}}
+            <!-- Logged in view -->
             <div class="welcome-header">
-                <img src="/img/profile-icon.png" alt="Profile" class="profile-icon">
-                <h1>Hello, {{user.username}}!</h1>
-            </div>
-           
-            <div class="quick-actions">
-                <a href="/identify" class="action-card">
-                    <i class="fa fa-camera"></i>
-                    <span>Identify a Flower</span>
-                </a>
-                <a href="/collection" class="action-card">
-                    <i class="fa fa-book"></i>
-                    <span>My Collection</span>
-                </a>
-                <a href="/explore" class="action-card">
-                    <i class="fa fa-compass"></i>
-                    <span>Explore Nearby</span>
-                </a>
-            </div>
-            
-            <div class="recent-activity">
-                <h2>Recent Discoveries</h2>
-                <div class="activity-empty">
-                    <i class="fa fa-leaf"></i>
-                    <p>No recent plant identifications</p>
-                    <a href="/identify" class="btn-secondary">Start Discovering</a>
+                <div class="avatar">
+                    {{#if user.avatar}}<img src="{{user.avatar}}" alt="{{user.username}}">
+                    {{else}}<div class="avatar-placeholder"><i class="fa fa-seedling"></i></div>{{/if}}
                 </div>
+                <h1>Hello, {{user.username}}</h1>
+                <p class="tagline">What will you discover today?</p>
             </div>
             
-            <div class="bottom-nav">
-                <a href="/home" class="bottom-nav-item active">
-                    <i class="fa fa-home"></i>
-                    <span>Home</span>
-                </a>
-                <a href="/identify" class="bottom-nav-item add-button">
-                    <div class="add-icon">
-                        <i class="fa fa-plus"></i>
+            <!-- Quick actions section -->
+            <div class="action-cards">
+                <a href="/identify" class="action">
+                    <div class="action-icon identify">
+                        <i class="fa fa-camera"></i>
                     </div>
+                    <span>Identify</span>
                 </a>
-                <a href="/profile" class="bottom-nav-item">
-                    <i class="fa fa-user"></i>
-                    <span>Profile</span>
+                <a href="/collection" class="action">
+                    <div class="action-icon collection">
+                        <i class="fa fa-book"></i>
+                    </div>
+                    <span>Collection</span>
+                </a>
+                <a href="/explore" class="action">
+                    <div class="action-icon explore">
+                        <i class="fa fa-compass"></i>
+                    </div>
+                    <span>Explore</span>
                 </a>
             </div>
-        </div>
-        <div class="user-info">
-           
-            {{!-- <p class="user-email">{{user.email}}</p> --}}
-        </div>
-    {{else}}
-        <div class="welcome-container">
-            <div class="welcome-content">
-                <img src="/img/flower-logo-large.png" alt="FlowerFindr" class="hero-logo">
-                <h1>Welcome to FlowerFindr</h1>
-                <p class="hero-text">Discover the beautiful world of flowers around you with our plant identification technology</p>
+            
+            <!-- Recent discoveries section -->
+            <div class="section">
+                <h2>Recent Discoveries</h2>
+                {{#if recentDiscoveries.length}}
+                    <div class="items">
+                        {{#each recentDiscoveries}}
+                            <div class="card">
+                                <div class="icon flower-icon"><i class="fa fa-seedling"></i></div>
+                                <div class="details">
+                                    <h3>{{this.name}}</h3>
+                                    <div class="meta">
+                                        <span><i class="fa fa-calendar"></i> {{this.date}}</span>
+                                        <span><i class="fa fa-map-pin"></i> {{this.location}}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        {{/each}}
+                    </div>
+                {{else}}
+                    <div class="empty">
+                        <i class="fa fa-leaf"></i>
+                        <h3>No recent discoveries</h3>
+                        <p>Start identifying flowers around you</p>
+                        <a href="/identify" class="btn">Identify Now</a>
+                    </div>
+                {{/if}}
+            </div>
+            
+            <!-- Seasonal flowers section -->
+            <div class="section">
+                <h2>Seasonal Blooms</h2>
+                <div class="seasonal-flowers">
+                    <div class="seasonal-card">
+                        <div class="icon rose"><i class="fa fa-spa"></i></div>
+                        <span>Roses</span>
+                    </div>
+                    <div class="seasonal-card">
+                        <div class="icon tulip"><i class="fa fa-spa"></i></div>
+                        <span>Tulips</span>
+                    </div>
+                    <div class="seasonal-card">
+                        <div class="icon daisy"><i class="fa fa-spa"></i></div>
+                        <span>Daisies</span>
+                    </div>
+                </div>
+            </div>
+        {{else}}
+            <!-- Login/Register view -->
+            <div class="welcome-hero">
+                <div class="logo">
+                    <i class="fa fa-seedling"></i>
+                    <h1>FlowerFindr</h1>
+                </div>
+                <p class="hero-text">Discover and identify the beautiful world of flowers around you</p>
                 
-                <div class="cta-buttons">
-                    <a href="/register" class="btn-primary">Get Started <i class="fa fa-arrow-right"></i></a>
-                    <a href="/login" class="btn-secondary">Sign In</a>
+                <div class="auth-buttons">
+                    <a href="/register" class="btn">Get Started</a>
+                    <a href="/login" class="btn-outline">Sign In</a>
                 </div>
                 
-                <div class="feature-list">
+                <div class="features">
                     <div class="feature">
                         <i class="fa fa-camera"></i>
-                        <p>Identify plants instantly with your camera</p>
+                        <span>Instant flower identification</span>
                     </div>
                     <div class="feature">
                         <i class="fa fa-map-marker-alt"></i>
-                        <p>Discover flowers native to your region</p>
+                        <span>Location-based discoveries</span>
                     </div>
                     <div class="feature">
                         <i class="fa fa-book"></i>
-                        <p>Find your personal flower collection</p>
+                        <span>Personal flower collection</span>
                     </div>
                 </div>
             </div>
-            
-            <div class="flower-decoration left"></div>
-            <div class="flower-decoration right"></div>
-            <div class="wave-bottom"></div>
-        </div>
-    {{/if}}
+        {{/if}}
+    </div>
+    
+    <!-- Bottom navigation -->
+    <nav class="nav">
+        <a href="/home" class="active"><i class="fa fa-home"></i><span>Home</span></a>
+        <a href="/identify" class="camera"><i class="fa fa-camera"></i></a>
+        <a href="/profile"><i class="fa fa-user"></i><span>Profile</span></a>
+    </nav>
 </div>
+
+<style>
+    :root {
+        --primary: #4CAF50;
+        --primary-light: #80C683;
+        --secondary: #FFC107;
+        --text: #333;
+        --text-light: #757575;
+        --bg: #F9F9F9;
+        --card: #FFF;
+        --rose: #E91E63;
+        --tulip: #FF9800;
+        --daisy: #9C27B0;
+        --sunflower: #FFC107;
+        --dandelion: #FF9800;
+        --identify: #4CAF50;
+        --collection: #2196F3;
+        --explore: #FF9800;
+        --font-title: 'Lora', serif;
+        --font-body: 'Poppins', sans-serif;
+        --shadow: 0 2px 8px rgba(0,0,0,0.08);
+    }
+    
+    /* Base styles */
+    body {
+        background-color: var(--bg);
+        color: var(--text);
+        font-family: var(--font-body);
+        margin: 0;
+    }
+    
+    h1, h2, h3 {
+        font-family: var(--font-title);
+        margin: 0;
+    }
+    
+    /* Layout */
+    .home-page {
+        min-height: 100vh;
+        padding-bottom: 70px;
+        position: relative;
+    }
+    
+    .home-container {
+        max-width: 550px;
+        margin: 0 auto;
+        padding: 16px;
+    }
+    
+    /* Welcome header */
+    .welcome-header {
+        text-align: center;
+        padding: 20px 0;
+        margin-bottom: 20px;
+    }
+    
+    .avatar {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+    
+    .avatar-placeholder, .avatar img {
+        width: 80px;
+        height: 80px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, var(--primary-light), var(--primary));
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 30px;
+        margin-bottom: 12px;
+        box-shadow: var(--shadow);
+        border: 3px solid white;
+        object-fit: cover;
+    }
+    
+    .welcome-header h1 {
+        font-size: 24px;
+        margin: 4px 0;
+    }
+    
+    .tagline {
+        color: var(--text-light);
+        font-size: 14px;
+        margin: 0;
+    }
+    
+    /* Action cards */
+    .action-cards {
+        display: flex;
+        justify-content: center;
+        gap: 16px;
+        margin-bottom: 30px;
+    }
+    
+    .action {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        text-decoration: none;
+        color: var(--text);
+        flex: 1;
+    }
+    
+    .action-icon {
+        width: 60px;
+        height: 60px;
+        border-radius: 16px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 8px;
+        color: white;
+        font-size: 24px;
+        box-shadow: var(--shadow);
+        transition: transform 0.2s;
+    }
+    
+    .action:hover .action-icon {
+        transform: scale(1.05);
+    }
+    
+    .action-icon.identify { background: var(--identify); }
+    .action-icon.collection { background: var(--collection); }
+    .action-icon.explore { background: var(--explore); }
+    
+    /* Section styling */
+    .section {
+        margin-bottom: 30px;
+    }
+    
+    .section h2 {
+        font-size: 20px;
+        margin-bottom: 16px;
+        padding-bottom: 6px;
+        position: relative;
+    }
+    
+    .section h2:after {
+        content: '';
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        width: 40px;
+        height: 2px;
+        background-color: var(--primary);
+    }
+    
+    /* Cards */
+    .items {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+    }
+    
+    .card {
+        display: flex;
+        align-items: center;
+        background: var(--card);
+        border-radius: 12px;
+        padding: 14px;
+        box-shadow: var(--shadow);
+    }
+    
+    .icon {
+        width: 46px;
+        height: 46px;
+        border-radius: 50%;
+        background: var(--primary);
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 18px;
+        margin-right: 14px;
+        flex-shrink: 0;
+    }
+    
+    /* Flower colors */
+    .icon.rose { background: var(--rose); }
+    .icon.tulip { background: var(--tulip); }
+    .icon.daisy { background: var(--daisy); }
+    .icon.sunflower { background: var(--sunflower); }
+    .icon.dandelion { background: var(--dandelion); }
+    
+    .details {
+        flex: 1;
+    }
+    
+    .details h3 {
+        font-size: 16px;
+        margin-bottom: 4px;
+    }
+    
+    .meta {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+    }
+    
+    .meta span {
+        font-size: 12px;
+        color: var(--text-light);
+        display: flex;
+        align-items: center;
+        gap: 5px;
+    }
+    
+    /* Seasonal flowers */
+    .seasonal-flowers {
+        display: flex;
+        justify-content: space-between;
+        gap: 12px;
+    }
+    
+    .seasonal-card {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        background: var(--card);
+        padding: 16px 8px;
+        border-radius: 12px;
+        box-shadow: var(--shadow);
+        flex: 1;
+    }
+    
+    .seasonal-card .icon {
+        margin-right: 0;
+        margin-bottom: 8px;
+    }
+    
+    .seasonal-card span {
+        font-size: 14px;
+    }
+    
+    /* Empty state */
+    .empty {
+        text-align: center;
+        padding: 40px 20px;
+        background: var(--card);
+        border-radius: 12px;
+        box-shadow: var(--shadow);
+    }
+    
+    .empty i {
+        font-size: 32px;
+        color: var(--primary);
+        margin-bottom: 16px;
+    }
+    
+    .empty h3 {
+        margin-bottom: 8px;
+    }
+    
+    .empty p {
+        color: var(--text-light);
+        margin-bottom: 20px;
+    }
+    
+    .btn {
+        background: var(--primary);
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        border-radius: 8px;
+        font-weight: 500;
+        text-decoration: none;
+        display: inline-block;
+    }
+    
+    /* Welcome hero for logged out users */
+    .welcome-hero {
+        text-align: center;
+        padding: 40px 0;
+    }
+    
+    .logo {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        margin-bottom: 20px;
+    }
+    
+    .logo i {
+        font-size: 48px;
+        color: var(--primary);
+        margin-bottom: 12px;
+    }
+    
+    .logo h1 {
+        font-size: 32px;
+        color: var(--text);
+    }
+    
+    .hero-text {
+        font-size: 16px;
+        color: var(--text-light);
+        margin-bottom: 30px;
+        max-width: 300px;
+        margin-left: auto;
+        margin-right: auto;
+    }
+    
+    .auth-buttons {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        max-width: 240px;
+        margin: 0 auto 40px;
+    }
+    
+    .btn-outline {
+        background: transparent;
+        color: var(--primary);
+        border: 1px solid var(--primary);
+        padding: 10px 20px;
+        border-radius: 8px;
+        font-weight: 500;
+        text-decoration: none;
+    }
+    
+    .features {
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+        max-width: 300px;
+        margin: 0 auto;
+    }
+    
+    .feature {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+    
+    .feature i {
+        background-color: rgba(76,175,80,0.1);
+        width: 36px;
+        height: 36px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 50%;
+        color: var(--primary);
+    }
+    
+    /* Bottom navigation */
+    .nav {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 60px;
+        background: white;
+        display: flex;
+        justify-content: space-around;
+        align-items: center;
+        box-shadow: 0 -2px 8px rgba(0,0,0,0.06);
+    }
+    
+    .nav a {
+        color: var(--text-light);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        text-decoration: none;
+        font-size: 12px;
+        flex: 1;
+    }
+    
+    .nav a.active {
+        color: var(--primary);
+    }
+    
+    .nav i {
+        font-size: 20px;
+        margin-bottom: 4px;
+    }
+    
+    .camera {
+        transform: translateY(-15px);
+    }
+    
+    .camera i {
+        background: var(--primary);
+        width: 46px;
+        height: 46px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        box-shadow: 0 4px 8px rgba(76,175,80,0.3);
+    }
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Color the flower icons based on name
+    document.querySelectorAll('.flower-icon').forEach(icon => {
+        const nameElement = icon.closest('.card').querySelector('h3');
+        if (nameElement) {
+            const flowerName = nameElement.textContent.toLowerCase();
+            
+            if (flowerName.includes('rose')) icon.classList.add('rose');
+            else if (flowerName.includes('tulip')) icon.classList.add('tulip');
+            else if (flowerName.includes('daisy')) icon.classList.add('daisy');
+            else if (flowerName.includes('sunflower')) icon.classList.add('sunflower');
+            else if (flowerName.includes('dandelion')) icon.classList.add('dandelion');
+        }
+    });
+});
+</script>
