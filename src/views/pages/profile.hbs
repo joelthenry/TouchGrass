@@ -1,0 +1,115 @@
+<div class="flower-app-profile">
+    <div class="profile-header">
+        <div class="profile-cover">
+            <div class="profile-avatar">
+                {{#if user.avatar}}
+                    <img src="{{user.avatar}}" alt="{{user.username}}" class="avatar-image">
+                {{else}}
+                    <div class="avatar-placeholder">
+                        <i class="fa fa-user"></i>
+                    </div>
+                {{/if}}
+            </div>
+        </div>
+        
+        <div class="profile-info">
+            <h1>{{user.username}}</h1>
+            <p class="profile-email">{{user.email}}</p>
+            
+            <div class="profile-stats">
+                <div class="stat-item">
+                    <span class="stat-value">{{user.discoveryCount}}</span>
+                    <span class="stat-label">Discoveries</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-value">{{user.collectionCount}}</span>
+                    <span class="stat-label">Collection</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-value">{{user.badgeCount}}</span>
+                    <span class="stat-label">Badges</span>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="profile-content">
+        <div class="section-tabs">
+            <button class="tab-button active" data-tab="discoveries">My Discoveries</button>
+            <button class="tab-button" data-tab="collection">Collection</button>
+        </div>
+        
+        <div class="tab-content" id="discoveries-tab">
+            {{#if user.discoveries}}
+                <div class="discoveries-grid">
+                    {{#each user.discoveries}}
+                        <div class="discovery-card">
+                            <img src="{{this.imageUrl}}" alt="{{this.name}}" class="discovery-image">
+                            <div class="discovery-info">
+                                <h3>{{this.name}}</h3>
+                                <p class="discovery-date">{{this.date}}</p>
+                                <p class="discovery-location"><i class="fa fa-map-marker-alt"></i> {{this.location}}</p>
+                            </div>
+                        </div>
+                    {{/each}}
+                </div>
+            {{else}}
+                <div class="empty-state">
+                    <i class="fa fa-leaf"></i>
+                    <p>You haven't discovered any flowers yet</p>
+                    <a href="/identify" class="btn-secondary">Identify Flowers</a>
+                </div>
+            {{/if}}
+        </div>
+        
+        <div class="tab-content hidden" id="collection-tab">
+            {{#if user.collection}}
+                <div class="collection-grid">
+                    {{#each user.collection}}
+                        <div class="collection-card">
+                            <img src="{{this.imageUrl}}" alt="{{this.name}}" class="collection-image">
+                            <div class="collection-info">
+                                <h3>{{this.name}}</h3>
+                                <p class="collection-scientific">{{this.scientificName}}</p>
+                                <div class="collection-tags">
+                                    {{#each this.tags}}
+                                        <span class="tag">{{this}}</span>
+                                    {{/each}}
+                                </div>
+                            </div>
+                        </div>
+                    {{/each}}
+                </div>
+            {{else}}
+                <div class="empty-state">
+                    <i class="fa fa-book"></i>
+                    <p>Your collection is empty</p>
+                    <a href="/explore" class="btn-secondary">Explore Flowers</a>
+                </div>
+            {{/if}}
+        </div>
+    </div>
+    
+    <div class="profile-actions">
+        <a href="/settings" class="btn-outline"><i class="fa fa-cog"></i> Settings</a>
+        <a href="/logout" class="btn-outline logout-btn"><i class="fa fa-sign-out-alt"></i> Logout</a>
+    </div>
+    
+    <div class="bottom-nav">
+        <a href="/home" class="bottom-nav-item">
+            <i class="fa fa-home"></i>
+            <span>Home</span>
+        </a>
+        <a href="/identify" class="bottom-nav-item add-button">
+            <div class="add-icon">
+                <i class="fa fa-plus"></i>
+            </div>
+        </a>
+        <a href="/profile" class="bottom-nav-item active">
+            <i class="fa fa-user"></i>
+            <span>Profile</span>
+        </a>
+    </div>
+    
+    <div class="flower-decoration top-right"></div>
+</div>
