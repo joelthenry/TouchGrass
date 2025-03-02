@@ -33,13 +33,20 @@
             document.getElementById("location-box").innerText = `Current Location: ${lat.toFixed(5)}, ${lng.toFixed(5)}`;
         }
 
-        map.locate({ setView: true, maxZoom: 16, watch: true });
+        map.locate({ setView: false, maxZoom: 16, watch: true });
+
+        let firstUpdate = true; 
 
         map.on('locationfound', function (e) {
             const lat = e.latlng.lat;
             const lng = e.latlng.lng
             L.marker([lat, lng]).addTo(map)
             updateLocation(lat,lng);
+            if(firstUpdate)
+            {
+                map.setView([lat, lng], 15);
+                firstUpdate = false;
+            }
         })
 
         map.on('locationerror', function () {
@@ -47,7 +54,7 @@
         });
 
         const flowerIcon = L.icon({
-            iconUrl: 'TouchGrass\src\img\pin.png', // Path to your custom image
+            iconUrl: "/img/pin_red.png", // Path to your custom image
             iconSize: [40, 40], // Size of the icon [width, height]
             iconAnchor: [20, 40], // Position relative to the marker point
             popupAnchor: [0, -40] // Position relative to the popup
@@ -56,7 +63,6 @@
         // Watch user location and send updates
         navigator.geolocation.watchPosition((position) => {
             const { latitude, longitude } = position.coords;
-            socket.emit('locationUpdate', { latitude, longitude });
         });
 
         // Receive live location updates
@@ -65,11 +71,17 @@
             const { latitude, longitude } = position.coords;
         });
 
-        navigator.geolocation.SavePosition((position) => {
+        function SavePosition(position)
+        {
             const { latitude, longitude } = position.coords;
             L.marker([latitude, longitude], {icon: flowerIcon}).addTo(map);
             map.setView([latitude, longitude], 15);
+        }
+
+        navigator.geolocation.getCurrentPosition(SavePosition, (error) => {
+            console.error("Error getting location:", error.message);
         });
+
 
 
     </script>

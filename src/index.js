@@ -239,7 +239,7 @@ app.get('/identify', (req, res) => {
     res.render('pages/identify');
 });
 
-app.get('/map', (req, res) => {
+app.get('/explore', (req, res) => {
     res.render('pages/map');
 });
 
