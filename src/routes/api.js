@@ -6,7 +6,7 @@ const axios = require('axios');
 const { v4: uuidv4 } = require('uuid');
 
 // Ensure uploads directory exists
-const uploadsDir = path.join(__dirname, '../public/uploads');
+const uploadsDir = "/repository/uploads";
 if (!fs.existsSync(uploadsDir)) {
     fs.mkdirSync(uploadsDir, { recursive: true });
 }
