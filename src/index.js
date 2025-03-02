@@ -21,11 +21,11 @@ const hbs = handlebars.create({
 
 // database configuration
 const dbConfig = {
-    host: 'db',  
-    port: 5432, 
-    database: process.env.POSTGRES_DB, 
-    user: process.env.POSTGRES_USER, 
-    password: process.env.POSTGRES_PASSWORD, 
+    host: 'db',
+    port: 5432,
+    database: process.env.POSTGRES_DB,
+    user: process.env.POSTGRES_USER,
+    password: process.env.POSTGRES_PASSWORD
 };
 
 const db = pgp(dbConfig);
@@ -58,6 +58,18 @@ app.use(
     })
 );
 
+app.use((req, res, next) => {
+    res.locals.user = req.session.user;
+    next();
+});
+
+const requireLogin = (req, res, next) => {
+    if (!req.session.user) {
+        return res.redirect('/home');
+    }
+    next();
+};
+
 app.get('/welcome', (req, res) => {
     res.json({ status: 'success', message: 'Welcome!' });
 });
@@ -79,17 +91,22 @@ app.get('/home', (req, res) => {
     }
 });
 
+app.get('/logout', (req, res) => {
+    req.session.destroy();
+    res.redirect('/home');
+});
+
 app.get('/login', (req, res) => {
     res.render('pages/login');
 });
 
 app.post('/login', (req, res) => {
-    const email = req.body.email;
+    const username = req.body.username;
     const password = req.body.password;
 
-    db.one('SELECT * FROM users WHERE email = $1', email)
+    db.one('SELECT * FROM users WHERE username = $1', username)
         .then(user => {
-            bcrypt.compare(password, user.password, (err, result) => {
+            bcrypt.compare(password, user.password, (_err, result) => {
                 if (result) {
                     req.session.user = user;
                     res.redirect('/home');
@@ -114,7 +131,7 @@ app.post('/register', (req, res) => {
     const username = req.body.username;
 
     bcrypt.hash(password, 10, (err, hash) => {
-        db.none('INSERT INTO users(email, username, password) VALUES($1, $2)', [email, username, hash])
+        db.none('INSERT INTO users(email, username, password) VALUES($1, $2, $3)', [email, username, hash])
             .then(() => {
                 res.redirect('/login');
             })
