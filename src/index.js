@@ -70,6 +70,11 @@ app.get('/', (req, res) => {
     res.redirect('/home');
 });
 
+// Define the login route
+app.get('/login', (req, res) => {
+    res.render('pages/login', { title: 'Login' });
+});
+
 app.get('/register', (req, res) => {
     res.render('pages/register');
 });
