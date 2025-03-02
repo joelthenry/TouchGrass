@@ -34,7 +34,7 @@
                 <div class="items">
                     {{#each user.discoveries}}
                         <div class="card" data-lat="{{this.latitude}}" data-lng="{{this.longitude}}" data-name="{{this.name}}" data-date="{{this.date}}">
-                            <div class="icon {{toLowerCase this.name}}"><i class="fa fa-seedling"></i></div>
+                            <div class="icon flower-icon"><i class="fa fa-seedling"></i></div>
                             <div class="details">
                                 <h3>{{this.name}}</h3>
                                 <div class="meta">
@@ -62,7 +62,7 @@
                 <div class="items">
                     {{#each user.collection}}
                         <div class="card">
-                            <div class="icon {{toLowerCase this.name}}"><i class="fa fa-spa"></i></div>
+                            <div class="icon flower-icon"><i class="fa fa-spa"></i></div>
                             <div class="details">
                                 <h3>{{this.name}}</h3>
                                 <p class="scientific">{{this.scientificName}}</p>
@@ -355,7 +355,7 @@
     }
     
     .actions {
-        color: var(--primary);
+        color: var (--primary);
     }
     
     /* Empty states */
@@ -592,5 +592,19 @@ document.addEventListener('DOMContentLoaded', function() {
             L.marker([lat, lng]).addTo(map);
         }, 100);
     }
+
+
+    document.querySelectorAll('.flower-icon').forEach(icon => {
+        const nameElement = icon.closest('.card').querySelector('h3');
+        if (nameElement) {
+            const flowerName = nameElement.textContent.toLowerCase();
+            
+            if (flowerName.includes('rose')) icon.classList.add('rose');
+            else if (flowerName.includes('tulip')) icon.classList.add('tulip');
+            else if (flowerName.includes('daisy')) icon.classList.add('daisy');
+            else if (flowerName.includes('sunflower')) icon.classList.add('sunflower');
+            else if (flowerName.includes('dandelion')) icon.classList.add('dandelion');
+        }
+    });
 });
 </script>
