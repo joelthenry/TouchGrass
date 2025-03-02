@@ -1,17 +1,23 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Live Map</title>
-    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
-    <script src="/socket.io/socket.io.js"></script>
-    <style>
-        #map { height: 500px; width: 100%; }
+    <div id="location-box">Current Location: </div>
+   <style>
+    #location-box {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        background: rgba(255, 255, 255, 0.9);
+        padding: 8px;
+        border-radius: 5px;
+        font-size: 14px;
+        z-index: 1000; /* Ensure it's above the map */
+    }
+
+    #map {
+        height: 100vh; 
+        width: 100%;
+    }
     </style>
-</head>
-<body>
-    <div id="map"></div>
+
+   <div id="map"></div>
 
     <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
     <script>
@@ -22,6 +28,12 @@
         }).addTo(map);
 
         const socket = io();
+
+        const { latitude, longitude } = position.coords;
+        const lat = position.coords.latitude;
+        const lng = position.coords.longitude;
+
+        document.getElementById("location-box").innerText = `${lat}, ${lng}`;
 
         const flowerIcon = L.icon({
             iconUrl: 'TouchGrass\src\img\pin.png', // Path to your custom image
@@ -44,14 +56,13 @@
 
         navigator.geolocation.getCurrentPosition((position) => {
         const { latitude, longitude } = position.coords;
+        })
 
         navigator.geolocation.SavePosition((position) => {
-        position.coords = getCurrentPosition;
-        const L.marker([latitude, longitude], {icon: flowerIcon}).addTo(map);
+        const { latitude, longitude } = position.coords;
+        L.marker([latitude, longitude], {icon: flowerIcon}).addTo(map);
         map.setView([latitude, longitude], 15);
         });
 
 
     </script>
-</body>
-</html>
