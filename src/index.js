@@ -13,6 +13,7 @@ app.use(express.static('src/resources'));
 
 
 app.use(express.static(__dirname + '/')); 
+
 const hbs = handlebars.create({
     extname: 'hbs',
     layoutsDir: __dirname + '/views/layouts',
@@ -30,11 +31,11 @@ const hbs = handlebars.create({
 
 // database configuration
 const dbConfig = {
-    host: 'db',  
-    port: 5432, 
-    database: process.env.POSTGRES_DB, 
-    user: process.env.POSTGRES_USER, 
-    password: process.env.POSTGRES_PASSWORD, 
+    host: 'db',
+    port: 5432,
+    database: process.env.POSTGRES_DB,
+    user: process.env.POSTGRES_USER,
+    password: process.env.POSTGRES_PASSWORD
 };
 
 const db = pgp(dbConfig);
@@ -58,11 +59,7 @@ app.use(bodyParser.json()); // specify the usage of JSON for parsing request bod
 app.use(session({
     secret: process.env.SESSION_SECRET || 'default_secret',
     resave: false,
-    saveUninitialized: false,
-    //Wasn;t sure if we needed cookies or not so I included it for now
-    // cookie: {
-    //     maxAge: 1000 * 60 * 60 * 24 // 24 hours
-    // }
+    saveUninitialized: false
 }));
 
 app.use(
@@ -70,6 +67,18 @@ app.use(
         extended: true,
     })
 );
+
+app.use((req, res, next) => {
+    res.locals.user = req.session.user;
+    next();
+});
+
+const requireLogin = (req, res, next) => {
+    if (!req.session.user) {
+        return res.redirect('/home');
+    }
+    next();
+};
 
 app.get('/welcome', (req, res) => {
     res.json({ status: 'success', message: 'Welcome!' });
@@ -79,23 +88,20 @@ app.get('/', (req, res) => {
     res.redirect('/home');
 });
 
-app.get('/logout', (req, res) => {
-    req.session.destroy();
-    res.redirect('/home');
-});
-
-app.get('/profile', (req, res) => {
+app.get('/profile', requireLogin, (req, res) => {
     res.render('pages/profile');
 });
 
-// Define the login route
-app.get('/login', (req, res) => {
-    res.render('pages/login', { title: 'Login' });
+
+app.get('/identify', (req, res) => {
+    res.render('pages/identify');
 });
 
-app.get('/register', (req, res) => {
-    res.render('pages/register');
+app.get('/map', (req, res) => {
+    res.render('pages/map');
 });
+
+
 
 app.get('/home', (req, res) => {
     //pass the user to home screen only if it already exists
@@ -108,6 +114,57 @@ app.get('/home', (req, res) => {
             user: req.session.user
         });
     }
+});
+
+app.get('/logout', (req, res) => {
+    req.session.destroy();
+    res.redirect('/home');
+});
+
+app.get('/login', (req, res) => {
+    res.render('pages/login');
+});
+
+app.post('/login', (req, res) => {
+    const username = req.body.username;
+    const password = req.body.password;
+
+    db.one('SELECT * FROM users WHERE username = $1', username)
+        .then(user => {
+            bcrypt.compare(password, user.password, (_err, result) => {
+                if (result) {
+                    req.session.user = user;
+                    res.redirect('/home');
+                } else {
+                    res.redirect('/login');
+                }
+            });
+        })
+        .catch(error => {
+            console.log('ERROR:', error.message || error);
+            res.redirect('/login');
+        });
+});
+
+app.get('/register', (req, res) => {
+    res.render('pages/register');
+});
+
+app.post('/register', (req, res) => {
+    const email = req.body.email;
+    const password = req.body.password;
+    const username = req.body.username;
+
+    bcrypt.hash(password, 10, (err, hash) => {
+        db.none('INSERT INTO users(email, username, password) VALUES($1, $2, $3)', [email, username, hash])
+            .then(() => {
+                res.redirect('/login');
+            })
+            .catch(error => {
+                console.log('ERROR:', error.message || error);
+                res.redirect('/register');
+            });
+    });
 });
 
 if (require.main === module) {
