@@ -852,6 +852,45 @@ a:hover {
     height: 48px;
 }
 
+/* Add these styles to your existing CSS file */
+
+.camera-error {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.8);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 10;
+}
+
+.error-content {
+    background-color: white;
+    border-radius: 12px;
+    padding: 20px;
+    text-align: center;
+    max-width: 80%;
+}
+
+.error-content i {
+    font-size: 36px;
+    color: #f44336;
+    margin-bottom: 10px;
+}
+
+.error-content h3 {
+    margin-bottom: 10px;
+    color: #333;
+}
+
+.error-content p {
+    margin-bottom: 20px;
+    color: #666;
+}
+
 /* Photo Preview */
 .photo-preview {
     position: relative;
@@ -1003,4 +1042,52 @@ a:hover {
 /* Utility Classes */
 .hidden {
     display: none !important;
+}
+
+
+.camera-active {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    background-color: #000; /* Ensure there's a black background */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+#camera-stream {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    background-color: #000;
+    display: block;
+}
+
+.camera-permission-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.7);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    z-index: 10;
+}
+
+.camera-permission-overlay button {
+    padding: 15px 30px;
+    font-size: 18px;
+    margin-bottom: 15px;
+}
+
+.camera-permission-overlay p {
+    color: white;
+    font-size: 14px;
+}
+
+#camera-permission-button i {
+    margin-right: 8px;
 }
