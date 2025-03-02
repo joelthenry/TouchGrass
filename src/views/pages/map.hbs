@@ -1,4 +1,4 @@
-    <div id="location-box">Current Location: </div>
+    <div id="location-box"></div>
    <style>
     #location-box {
         position: absolute;
@@ -19,6 +19,7 @@
 
    <div id="map"></div>
 
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
     <script>
         const map = L.map('map').setView([40.00743998148659, -105.26336185653743], 13); // Default location
@@ -27,13 +28,23 @@
             attribution: '&copy; OpenStreetMap contributors'
         }).addTo(map);
 
-        const socket = io();
 
-        const { latitude, longitude } = position.coords;
-        const lat = position.coords.latitude;
-        const lng = position.coords.longitude;
+        function updateLocation(lat, lng) {
+            document.getElementById("location-box").innerText = `Current Location: ${lat.toFixed(5)}, ${lng.toFixed(5)}`;
+        }
 
-        document.getElementById("location-box").innerText = `${lat}, ${lng}`;
+        map.locate({ setView: true, maxZoom: 16, watch: true });
+
+        map.on('locationfound', function (e) {
+            const lat = e.latlng.lat;
+            const lng = e.latlng.lng
+            L.marker([lat, lng]).addTo(map)
+            updateLocation(lat,lng);
+        })
+
+        map.on('locationerror', function () {
+            document.getElementById("location-box").innerText = "Location access denied!";
+        });
 
         const flowerIcon = L.icon({
             iconUrl: 'TouchGrass\src\img\pin.png', // Path to your custom image
@@ -49,19 +60,15 @@
         });
 
         // Receive live location updates
-        socket.on('updateLocation', (data) => {
-            L.marker([data.latitude, data.longitude]).addTo(map);
-            map.setView([data.latitude, data.longitude], 15);
-        });
 
         navigator.geolocation.getCurrentPosition((position) => {
-        const { latitude, longitude } = position.coords;
-        })
+            const { latitude, longitude } = position.coords;
+        });
 
         navigator.geolocation.SavePosition((position) => {
-        const { latitude, longitude } = position.coords;
-        L.marker([latitude, longitude], {icon: flowerIcon}).addTo(map);
-        map.setView([latitude, longitude], 15);
+            const { latitude, longitude } = position.coords;
+            L.marker([latitude, longitude], {icon: flowerIcon}).addTo(map);
+            map.setView([latitude, longitude], 15);
         });
 
 
