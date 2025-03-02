@@ -1,41 +1,26 @@
-version: '3'
 
 services:
-  web-server:
-    build:
-      context: ./web-server
-      dockerfile: Dockerfile
-    ports:
-      - "${PORT:-3000}:3000"
+  db:
+    image: postgres:14
+    env_file: .env
+    expose:
+      - '5432'
     volumes:
-      - ./web-server:/app
-      - /app/node_modules
-      - uploads_data:/app/uploads
+      - database:/var/lib/postgresql/data
+      - ./src/init_data:/docker-entrypoint-initdb.d
+  web:
+    image: node:lts
+    user: 'node'
+    working_dir: /repository
+    env_file: .env
     environment:
-      - NODE_ENV=${NODE_ENV:-development}
-      - PORT=${PORT:-3000}
-      - DB_HOST=${DB_HOST:-mysql}
-      - DB_USER=${DB_USER:-touchgrass}
-      - DB_PASSWORD=${DB_PASSWORD:-password}
-      - DB_NAME=${DB_NAME:-touchgrass_db}
-    restart: unless-stopped
+      - NODE_ENV=development
     depends_on:
-      - mysql
-
-  mysql:
-    image: mysql:8.0
+      - db
     ports:
-      - "${DB_PORT:-3306}:3306"
+      - '3000:3000'
     volumes:
-      - mysql_data:/var/lib/mysql
-    environment:
-      - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD:-rootpassword}
-      - MYSQL_DATABASE=${DB_NAME:-touchgrass_db}
-      - MYSQL_USER=${DB_USER:-touchgrass}
-      - MYSQL_PASSWORD=${DB_PASSWORD:-password}
-    restart: unless-stopped
-    command: --default-authentication-plugin=mysql_native_password
-
+      - ./:/repository
+    command: 'npm start' #'npm testandrun' for testing, 'npm start' otherwise
 volumes:
-  uploads_data:
-  mysql_data:
+  database:
