@@ -9,10 +9,46 @@ const session = require('express-session');
 const bcrypt = require('bcryptjs');
 const axios = require('axios'); 
 app.use(express.static('src/resources'));
+const apiRoutes = require('./routes/api'); 
 
+// Place this BEFORE any route definitions, near the top of your file:
 
+// Body parser middleware with increased limits
+app.use(express.json({
+  limit: '50mb',
+  verify: (req, res, buf) => {
+    req.rawBody = buf;  // Store raw body for verification if needed
+  }
+}));
 
+app.use(bodyParser.json({
+  limit: '50mb'
+}));
+
+app.use(bodyParser.urlencoded({
+  extended: true,
+  limit: '50mb'
+}));
+
+// Add this before the API routes registration:
+
+// Debug middleware for API requests
+app.use('/api', (req, res, next) => {
+  console.log('API Request received:', {
+    method: req.method,
+    path: req.path,
+    contentType: req.headers['content-type'],
+    contentLength: req.headers['content-length'],
+    hasBody: !!req.body,
+    bodySize: req.body ? Object.keys(req.body).length : 0
+  });
+  next();
+});
+
+// Then register your routes AFTER these middleware configurations
+app.use('/api', apiRoutes);
 app.use(express.static(__dirname + '/')); 
+app.use(express.static(path.join(__dirname, 'public')));
 
 const hbs = handlebars.create({
     extname: 'hbs',
@@ -55,18 +91,21 @@ app.set('view engine', 'hbs');
 app.set('views', path.join(__dirname, 'views'));
 app.use(bodyParser.json()); // specify the usage of JSON for parsing request body.
 
-// initialize session variables
+// Make sure you have this configuration for sessions:
+
 app.use(session({
     secret: process.env.SESSION_SECRET || 'default_secret',
     resave: false,
-    saveUninitialized: false
+    saveUninitialized: true, // Set this to true to create a session for all visitors
+    cookie: { secure: false } // Set to true if using HTTPS
 }));
 
-app.use(
-    bodyParser.urlencoded({
-        extended: true,
-    })
-);
+// Add this middleware to check session on all requests (for debugging)
+app.use((req, res, next) => {
+    console.log('Session ID:', req.sessionID);
+    console.log('Session data:', req.session);
+    next();
+});
 
 app.use((req, res, next) => {
     res.locals.user = req.session.user;
