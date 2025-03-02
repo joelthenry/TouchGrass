@@ -271,16 +271,55 @@ app.get('/explore', (req, res) => {
 
 });
 
-app.get('/home', (req, res) => {
+app.get('/home', async (req, res) => {
     //pass the user to home screen only if it already exists
     if (!req.session.user) {
         res.render('pages/home', {
             user: null
         });
     } else {
-        res.render('pages/home', {
-            user: req.session.user
-        });
+        try {
+            // Get 3 most recent posts for this user
+            const recentPosts = await db.any(`
+                SELECT 
+                    posts.img, 
+                    flowers.name,
+                    posts.latitude,
+                    posts.longitude,
+                    posts.created_at
+                FROM posts
+                JOIN flowers ON posts.flower_id = flowers.id
+                WHERE posts.user_id = $1
+                ORDER BY posts.created_at DESC
+                LIMIT 3
+            `, [req.session.user.id]);
+            
+            // Format the posts data
+            const recentDiscoveries = recentPosts.map(p => {
+                const lat = p.latitude !== null ? parseFloat(p.latitude) : null;
+                const lng = p.longitude !== null ? parseFloat(p.longitude) : null;
+                
+                return {
+                    imageUrl: p.img,
+                    name: p.name,
+                    date: new Date(p.created_at).toLocaleDateString(),
+                    location: (lat !== null && lng !== null) ? 
+                        `${lat.toFixed(4)}, ${lng.toFixed(4)}` : 
+                        'Location unknown'
+                };
+            });
+            
+            res.render('pages/home', {
+                user: req.session.user,
+                recentDiscoveries: recentDiscoveries
+            });
+        } catch (error) {
+            console.error('Error retrieving recent posts:', error);
+            res.render('pages/home', {
+                user: req.session.user,
+                recentDiscoveries: [] // Empty array if there's an error
+            });
+        }
     }
 });
 
