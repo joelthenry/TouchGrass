@@ -21,5 +21,18 @@ services:
     volumes:
       - ./:/repository
     command: 'npm start' #'npm testandrun' for testing, 'npm start' otherwise
+  flower-classifier:
+    build:
+      context: ./flowgerithms
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./flowgerithms:/workspace
+      - ./uploads:/repository/uploads
+    restart: unless-stopped
 volumes:
   database:
+networks:
+  default:
+    driver: bridge

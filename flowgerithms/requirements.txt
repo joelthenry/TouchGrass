@@ -1,0 +1,6 @@
+FastAPI
+Pydantic
+Pillow
+torch
+torchvision
+uvicorn
