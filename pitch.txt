@@ -1,0 +1,14 @@
+FlowerFindr - disovering the beauty around you.
+
+gist:
+  -web app that helps track your flower collection
+  -AI that identifies what flower you found
+  -Find more flowers around you
+
+AI:
+
+Web-Dev:
+
+Our Path:
+
+Future Uses:
