@@ -10,12 +10,26 @@
     <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
     <link rel="stylesheet" href="/css/styles.css">
+
+    {{!-- scripts for map --}}
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Live Map</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+    <script soc="/socket.io/socket.io.js"></script>
+    <style>
+        #map { height: 500vh; width: 100%; }
+    </style>
 </head>
 <body>
     {{{body}}}
-    
+
     {{#if_eq title "Profile"}}
-        <script src="/js/profile.js"></script>
+        <script src="resources/js/profile.js"></script>
+    {{/if_eq}}
+    
+    {{#if_eq title "Identify"}}
+        <script src="resources/js/identify.js"></script>
     {{/if_eq}}
 </body>
 </html>

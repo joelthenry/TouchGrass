@@ -5,71 +5,26 @@
     </div>
     
     <div class="camera-container">
-        <!-- Camera view when no photo has been taken -->
-        <div id="camera-view" class="camera-active">
+        <!-- Camera view -->
+        <div id="camera-view">
             <video id="camera-stream" autoplay playsinline></video>
-            <div class="camera-overlay">
-                <div class="camera-frame"></div>
-                <p class="camera-tip">Position the flower in the center</p>
-            </div>
-            <button id="capture-btn" class="capture-button">
+            <button id="start-camera" class="btn-primary">Enable Camera</button>
+            <div id="camera-status"></div>
+            <button id="capture-btn" class="capture-button hidden">
                 <div class="capture-icon"></div>
             </button>
         </div>
         
-        <!-- Preview after photo is taken -->
-        <div id="photo-preview" class="photo-preview hidden">
+        <!-- Photo preview -->
+        <div id="photo-preview" class="hidden">
             <canvas id="photo-canvas"></canvas>
             <div class="preview-controls">
                 <button id="retake-btn" class="btn-outline">
                     <i class="fa fa-redo"></i> Retake
                 </button>
-                <button id="confirm-btn" class="btn-primary">
-                    <i class="fa fa-check"></i> Identify
+                <button id="save-btn" class="btn-primary">
+                    <i class="fa fa-save"></i> Save Photo
                 </button>
-            </div>
-        </div>
-        
-        <!-- Loading state during identification -->
-        <div id="loading-state" class="loading-state hidden">
-            <div class="spinner"></div>
-            <p>Identifying your flower...</p>
-        </div>
-        
-        <!-- Results after identification -->
-        <div id="result-view" class="result-view hidden">
-            <div class="result-header">
-                <img id="result-image" src="" alt="Your flower">
-            </div>
-            <div class="result-content">
-                <div class="result-info">
-                    <h2 id="flower-name">Beautiful Flower</h2>
-                    <p id="scientific-name" class="scientific-name">Plantus Exampleus</p>
-                    
-                    <div class="confidence-bar">
-                        <div class="confidence-label">
-                            <span>Match confidence:</span>
-                            <span id="confidence-percent">95%</span>
-                        </div>
-                        <div class="confidence-track">
-                            <div id="confidence-fill" class="confidence-fill" style="width: 95%"></div>
-                        </div>
-                    </div>
-                    
-                    <div class="info-section">
-                        <h3>About this flower</h3>
-                        <p id="flower-description">Loading description...</p>
-                    </div>
-                </div>
-                
-                <div class="result-actions">
-                    <button id="save-btn" class="btn-primary">
-                        <i class="fa fa-bookmark"></i> Save to Collection
-                    </button>
-                    <button id="new-search-btn" class="btn-outline">
-                        <i class="fa fa-camera"></i> Identify Another
-                    </button>
-                </div>
             </div>
         </div>
     </div>
@@ -90,3 +45,269 @@
         </a>
     </div>
 </div>
+
+<script>
+// Inline script for maximum compatibility
+document.addEventListener('DOMContentLoaded', function() {
+    const videoElement = document.getElementById('camera-stream');
+    const startButton = document.getElementById('start-camera');
+    const statusDiv = document.getElementById('camera-status');
+    const captureBtn = document.getElementById('capture-btn');
+    const photoPreview = document.getElementById('photo-preview');
+    const cameraView = document.getElementById('camera-view');
+    const photoCanvas = document.getElementById('photo-canvas');
+    const retakeBtn = document.getElementById('retake-btn');
+    const saveBtn = document.getElementById('save-btn');
+    
+    let stream = null;
+    let photoData = null;
+    
+    // Initially hide the video until camera starts
+    videoElement.style.display = 'none';
+    captureBtn.classList.add('hidden');
+    
+    // Function to update status
+    function updateStatus(message, isError = false) {
+        statusDiv.textContent = message;
+        statusDiv.style.color = isError ? 'red' : 'green';
+        console.log(message);
+    }
+    
+    // Start camera when button is clicked
+    startButton.addEventListener('click', function() {
+        updateStatus('Requesting camera access...');
+        
+        // Simple camera request
+        if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+            navigator.mediaDevices.getUserMedia({ video: true })
+                .then(function(streamObj) {
+                    stream = streamObj;
+                    videoElement.srcObject = stream;
+                    videoElement.style.display = 'block';
+                    startButton.style.display = 'none';
+                    captureBtn.classList.remove('hidden');
+                    updateStatus('Camera active');
+                    
+                    // Log success
+                    console.log('Camera successfully started');
+                    console.log('Stream:', stream);
+                    console.log('Video tracks:', stream.getVideoTracks());
+                })
+                .catch(function(err) {
+                    updateStatus('Camera error: ' + err.name + ' - ' + err.message, true);
+                    console.error('Camera error:', err);
+                });
+        } else {
+            updateStatus('Your browser does not support camera access', true);
+        }
+    });
+    
+    // Capture photo
+    captureBtn.addEventListener('click', function() {
+        if (!stream) {
+            updateStatus('Camera not active', true);
+            return;
+        }
+        
+        try {
+            // Create canvas and draw the current video frame
+            const context = photoCanvas.getContext('2d');
+            photoCanvas.width = videoElement.videoWidth;
+            photoCanvas.height = videoElement.videoHeight;
+            context.drawImage(videoElement, 0, 0, photoCanvas.width, photoCanvas.height);
+            
+            // Save the photo data
+            photoData = photoCanvas.toDataURL('image/jpeg');
+            console.log("Captured photo data:", photoData.substring(0, 50) + "...");
+            
+            // Show preview
+            cameraView.classList.add('hidden');
+            photoPreview.classList.remove('hidden');
+            
+            // Stop the camera stream
+            if (stream) {
+                stream.getTracks().forEach(track => track.stop());
+            }
+            
+            updateStatus('Photo captured');
+        } catch (error) {
+            updateStatus('Error capturing photo: ' + error.message, true);
+            console.error('Capture error:', error);
+        }
+    });
+    
+    // Retake photo
+    retakeBtn.addEventListener('click', function() {
+        // Hide preview and show camera
+        photoPreview.classList.add('hidden');
+        cameraView.classList.remove('hidden');
+        
+        // Restart camera
+        startButton.style.display = 'block';
+        videoElement.style.display = 'none';
+        captureBtn.classList.add('hidden');
+        
+        updateStatus('Ready to take a new photo');
+    });
+    
+    // Save photo
+    saveBtn.addEventListener('click', function() {
+    if (!photoData) {
+        updateStatus('No photo to save', true);
+        return;
+    }
+    
+    updateStatus('Saving photo...');
+    
+    // Skip the test step and directly save the photo
+    // First fetch the ping endpoint to verify API is working
+    fetch('/api/ping')
+        .then(response => response.json())
+        .then(data => {
+            console.log('API ping successful:', data);
+            
+            // Now try to save the photo
+            return fetch('/api/save-photo', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    image: photoData,
+                    name: 'Captured Flower'
+                })
+            });
+        })
+        .then(response => {
+            console.log('Photo save response status:', response.status);
+            if (!response.ok) {
+                return response.text().then(text => {
+                    throw new Error(`HTTP error! status: ${response.status}, body: ${text}`);
+                });
+            }
+            return response.json();
+        })
+        .then(data => {
+            console.log('Photo saved successfully:', data);
+            updateStatus('Photo saved successfully!');
+        })
+        .catch(error => {
+            updateStatus('Error: ' + error.message, true);
+            console.error('Save error:', error);
+        });
+});
+});
+</script>
+
+<style>
+/* Inline styles for simplicity */
+.camera-container {
+    position: relative;
+    width: 100%;
+    height: 70vh;
+    background-color: #000;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    overflow: hidden;
+    border-radius: 10px;
+    margin-bottom: 20px;
+}
+
+#camera-view {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+
+#camera-stream {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+#start-camera {
+    position: absolute;
+    padding: 12px 24px;
+    font-size: 16px;
+    z-index: 10;
+}
+
+#camera-status {
+    position: absolute;
+    bottom: 20px;
+    background-color: rgba(0,0,0,0.7);
+    color: white;
+    padding: 8px 16px;
+    border-radius: 20px;
+    font-size: 14px;
+    z-index: 10;
+}
+
+.capture-button {
+    position: absolute;
+    bottom: 30px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 70px;
+    height: 70px;
+    border-radius: 50%;
+    background-color: white;
+    border: none;
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.3);
+    cursor: pointer;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 10;
+}
+
+.capture-icon {
+    width: 54px;
+    height: 54px;
+    border-radius: 50%;
+    border: 3px solid #333;
+    background-color: white;
+    transition: all 0.2s ease;
+}
+
+.capture-button:active .capture-icon {
+    width: 48px;
+    height: 48px;
+}
+
+#photo-preview {
+    position: relative;
+    width: 100%;
+    height: 100%;
+}
+
+#photo-canvas {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
+
+.preview-controls {
+    position: absolute;
+    bottom: 20px;
+    left: 0;
+    right: 0;
+    display: flex;
+    justify-content: space-around;
+    padding: 0 20px;
+}
+
+.preview-controls button {
+    padding: 10px 20px;
+    font-size: 16px;
+}
+
+.hidden {
+    display: none !important;
+}
+</style>
