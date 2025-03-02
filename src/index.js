@@ -271,8 +271,6 @@ app.get('/explore', (req, res) => {
 
 });
 
-
-
 app.get('/home', (req, res) => {
     //pass the user to home screen only if it already exists
     if (!req.session.user) {
@@ -335,6 +333,34 @@ app.post('/register', (req, res) => {
                 res.redirect('/register');
             });
     });
+});
+
+// Add this new API route to get all flower pins with details
+
+app.get("/api/flower-pins", async (req, res) => {
+    try {
+        // Query for all posts with flower information
+        const pins = await db.any(`
+            SELECT 
+                posts.id, 
+                posts.img, 
+                posts.latitude, 
+                posts.longitude, 
+                posts.created_at,
+                flowers.name,
+                users.username as discoverer
+            FROM posts
+            JOIN flowers ON posts.flower_id = flowers.id
+            JOIN users ON posts.user_id = users.id
+            WHERE posts.latitude IS NOT NULL AND posts.longitude IS NOT NULL
+            ORDER BY posts.created_at DESC
+        `);
+        
+        res.json(pins);
+    } catch (err) {
+        console.error("Database error getting flower pins:", err);
+        res.status(500).json({ error: "Internal Server Error" });
+    }
 });
 
 if (require.main === module) {

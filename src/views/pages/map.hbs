@@ -1,100 +1,374 @@
-    <div id="location-box"></div>
-   <style>
+<!-- Essential imports -->
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lora:wght@400;600&family=Poppins:wght@300;500&display=swap">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
+
+<div class="explore-page">
+    <div class="map-header">
+        <h1>Explore Flowers</h1>
+        <div class="map-stats" id="discovery-stats">
+            <span id="pin-count">Loading...</span>
+        </div>
+    </div>
+    
+    <div class="map-container">
+        <div id="map"></div>
+        <div id="location-box"></div>
+    </div>
+    
+    <!-- Bottom navigation -->
+    <nav class="nav">
+        <a href="/home"><i class="fa fa-home"></i><span>Home</span></a>
+        <a href="/identify" class="camera"><i class="fa fa-camera"></i></a>
+        <a href="/profile"><i class="fa fa-user"></i><span>Profile</span></a>
+    </nav>
+</div>
+
+<style>
+    :root {
+        --primary: #4CAF50;
+        --primary-light: #80C683;
+        --secondary: #FFC107;
+        --text: #333;
+        --text-light: #757575;
+        --bg: #F9F9F9;
+        --card: #FFF;
+        --font-title: 'Lora', serif;
+        --font-body: 'Poppins', sans-serif;
+        --shadow: 0 2px 8px rgba(0,0,0,0.08);
+    }
+    
+    /* Base styles */
+    body {
+        background-color: var(--bg);
+        color: var(--text);
+        font-family: var(--font-body);
+        margin: 0;
+        padding: 0;
+        height: 100vh;
+        display: flex;
+        flex-direction: column;
+    }
+    
+    /* Map page layout */
+    .explore-page {
+        display: flex;
+        flex-direction: column;
+        height: 100vh;
+        position: relative;
+    }
+    
+    .map-header {
+        padding: 12px 16px;
+        background: white;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        z-index: 10;
+    }
+    
+    .map-header h1 {
+        margin: 0;
+        font-family: var(--font-title);
+        font-size: 20px;
+        margin-bottom: 4px;
+    }
+    
+    .map-stats {
+        font-size: 14px;
+        color: var(--text-light);
+    }
+    
+    /* Map container */
+    .map-container {
+        flex: 1;
+        position: relative;
+    }
+    
+    #map {
+        height: 100%;
+        width: 100%;
+        z-index: 5;
+    }
+    
+    /* Status box */
     #location-box {
         position: absolute;
         top: 10px;
         right: 10px;
-        background: rgba(255, 255, 255, 0.9);
-        padding: 8px;
-        border-radius: 5px;
+        background: white;
+        padding: 8px 12px;
+        border-radius: 8px;
+        font-size: 13px;
+        z-index: 1000;
+        box-shadow: var(--shadow);
+        color: var(--text);
+    }
+    
+    /* Custom popup style */
+    .leaflet-popup-content-wrapper {
+        border-radius: 10px;
+        padding: 0;
+        overflow: hidden;
+    }
+    
+    .custom-popup {
+        padding: 4px;
+    }
+    
+    .custom-popup .flower-image {
+        width: 140px;
+        height: 100px;
+        object-fit: cover;
+        border-radius: 6px;
+        margin-bottom: 8px;
+    }
+    
+    .custom-popup .flower-name {
+        font-family: var(--font-title);
         font-size: 14px;
-        z-index: 1000; /* Ensure it's above the map */
+        margin: 0;
+        color: var(--primary);
     }
-
-    #map {
-        height: 100vh; 
-        width: 100%;
+    
+    .custom-popup .flower-date {
+        font-size: 12px;
+        color: var(--text-light);
+        margin: 4px 0 0;
     }
-    </style>
+    
+    /* Bottom navigation */
+    .nav {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 60px;
+        background: white;
+        display: flex;
+        justify-content: space-around;
+        align-items: center;
+        box-shadow: 0 -2px 8px rgba(0,0,0,0.06);
+        z-index: 100;
+    }
+    
+    .nav a {
+        color: var(--text-light);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        text-decoration: none;
+        font-size: 12px;
+        flex: 1;
+    }
+    
+    .nav a.active {
+        color: var(--primary);
+    }
+    
+    .nav i {
+        font-size: 20px;
+        margin-bottom: 4px;
+    }
+    
+    .camera {
+        transform: translateY(-15px);
+    }
+    
+    .camera i {
+        background: var(--primary);
+        width: 46px;
+        height: 46px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        box-shadow: 0 4px 8px rgba(76,175,80,0.3);
+    }
+</style>
 
-   <div id="map"></div>
+<script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        // Initialize map with a default view
+        const map = L.map('map').setView([40.00743998148659, -105.26336185653743], 13);
 
-    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
-    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
-    <script>
-        const map = L.map('map').setView([40.00743998148659, -105.26336185653743], 13); // Default location
-
+        // Add the tile layer (map style)
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            attribution: '&copy; OpenStreetMap contributors'
+            attribution: '&copy; OpenStreetMap contributors',
+            maxZoom: 19
         }).addTo(map);
 
-
-        function updateLocation(lat, lng) {
-            document.getElementById("location-box").innerText = `Current Location: ${lat.toFixed(5)}, ${lng.toFixed(5)}`;
+        // Location box update function
+        function updateLocationBox(lat, lng) {
+            document.getElementById("location-box").innerHTML = `
+                <strong>Current Location</strong><br>
+                ${lat.toFixed(5)}, ${lng.toFixed(5)}
+            `;
         }
+        
+        // User location marker and circle
+        let userMarker = null;
+        let userAccuracyCircle = null;
+        
+        // Find and track user location
+        map.locate({ 
+            setView: true, 
+            maxZoom: 16, 
+            watch: true,
+            enableHighAccuracy: true
+        });
 
-        map.locate({ setView: false, maxZoom: 16, watch: true });
-
-        let firstUpdate = true; 
-
-        map.on('locationfound', function (e) {
+        // When user location is found
+        map.on('locationfound', function(e) {
             const lat = e.latlng.lat;
-            const lng = e.latlng.lng
-            L.marker([lat, lng]).addTo(map)
-            updateLocation(lat,lng);
-            if(firstUpdate)
-            {
+            const lng = e.latlng.lng;
+            const accuracy = e.accuracy;
+            
+            // Update location display
+            updateLocationBox(lat, lng);
+            
+            // Remove previous markers if they exist
+            if (userMarker) {
+                map.removeLayer(userMarker);
+                map.removeLayer(userAccuracyCircle);
+            }
+            
+            // Create a user location marker with custom icon
+            userMarker = L.marker([lat, lng], {
+                icon: L.divIcon({
+                    className: 'user-location-marker',
+                    html: `
+                        <div style="background-color: #4285F4; width: 16px; height: 16px; border-radius: 50%; border: 3px solid white; box-shadow: 0 0 5px rgba(0,0,0,0.3);"></div>
+                    `,
+                    iconSize: [22, 22],
+                    iconAnchor: [11, 11]
+                })
+            }).addTo(map);
+            
+            // Add accuracy circle
+            userAccuracyCircle = L.circle([lat, lng], {
+                radius: accuracy / 2,
+                color: '#4285F4',
+                fillColor: '#4285F4',
+                fillOpacity: 0.1,
+                weight: 1
+            }).addTo(map);
+            
+            // Only set view on first location update
+            if (!window.locationInitialized) {
                 map.setView([lat, lng], 15);
-                firstUpdate = false;
+                window.locationInitialized = true;
             }
-        })
-
-        map.on('locationerror', function () {
-            document.getElementById("location-box").innerText = "Location access denied!";
         });
 
-        const flowerIcon = L.icon({
-            iconUrl: "/img/pin_red.png", // Path to your custom image
-            iconSize: [40, 40], // Size of the icon [width, height]
-            iconAnchor: [20, 40], // Position relative to the marker point
-            popupAnchor: [0, -40] // Position relative to the popup
+        // Handle location error
+        map.on('locationerror', function(e) {
+            document.getElementById("location-box").innerHTML = `
+                <strong>Location Error</strong><br>
+                ${e.message}
+            `;
+            console.error("Location error:", e);
+            
+            // Load pins anyway even if user location fails
+            loadFlowerPins();
         });
-
-        // Watch user location and send updates
-        navigator.geolocation.watchPosition((position) => {
-            const { latitude, longitude } = position.coords;
-        });
-
-        // Receive live location updates
-
-        navigator.geolocation.getCurrentPosition((position) => {
-            const { latitude, longitude } = position.coords;
-        });
-
-        function SavePosition(position)
-        {
-            const { latitude, longitude } = position.coords;
-            L.marker([latitude, longitude], {icon: flowerIcon}).addTo(map);
-            map.setView([latitude, longitude], 15);
+        
+        // Custom flower icons based on type
+        const flowerIcons = {
+            rose: createFlowerIcon('#E91E63'),
+            tulip: createFlowerIcon('#FF9800'),
+            daisy: createFlowerIcon('#9C27B0'),
+            sunflower: createFlowerIcon('#FFC107'),
+            dandelion: createFlowerIcon('#FF9800'),
+            default: createFlowerIcon('#4CAF50')
+        };
+        
+        // Create a flower marker icon with specified color
+        function createFlowerIcon(color) {
+            return L.divIcon({
+                className: 'flower-marker',
+                html: `
+                    <div style="background-color: ${color}; width: 20px; height: 20px; border-radius: 50%; 
+                         position: relative; box-shadow: 0 2px 5px rgba(0,0,0,0.2);">
+                        <div style="position: absolute; bottom: -8px; left: 6px; width: 8px; height: 8px; 
+                             transform: rotate(45deg); background-color: ${color};"></div>
+                    </div>
+                `,
+                iconSize: [20, 28],
+                iconAnchor: [10, 28],
+                popupAnchor: [0, -28]
+            });
+        }
+        
+        // Determine flower icon based on name
+        function getFlowerIcon(flowerName) {
+            const name = flowerName.toLowerCase();
+            if (name.includes('rose')) return flowerIcons.rose;
+            if (name.includes('tulip')) return flowerIcons.tulip;
+            if (name.includes('daisy')) return flowerIcons.daisy;
+            if (name.includes('sunflower')) return flowerIcons.sunflower;
+            if (name.includes('dandelion')) return flowerIcons.dandelion;
+            return flowerIcons.default;
         }
 
-        async function loadPins() {
+        // Load all flower pins from the server
+        async function loadFlowerPins() {
             try {
-                const response = await fetch("/getPins"); // Fetch Data from API
-                const locations = await response.json();  // Convert to JSON
-
-                locations.forEach(({ latitude, longitude }) => {
-                    L.marker([latitude, longitude]).addTo(map) // Add Pin to Map
-                        .bindPopup(`Lat: ${latitude}, Lng: ${longitude}`);
+                // Fetch enhanced pin data that includes flower details
+                const response = await fetch("/api/flower-pins");
+                const pins = await response.json();
+                
+                if (!pins || pins.length === 0) {
+                    console.log("No flower pins found");
+                    document.getElementById("pin-count").textContent = "No discoveries found";
+                    return;
+                }
+                
+                // Update stats count
+                document.getElementById("pin-count").textContent = `${pins.length} flower discoveries`;
+                
+                // Create a marker cluster group for better performance with many markers
+                const markers = [];
+                
+                // Add each pin to the map
+                pins.forEach(pin => {
+                    // Skip if missing coordinates
+                    if (!pin.latitude || !pin.longitude) return;
+                    
+                    // Create marker with the appropriate icon
+                    const marker = L.marker([pin.latitude, pin.longitude], {
+                        icon: getFlowerIcon(pin.name)
+                    });
+                    
+                    // Create custom popup content
+                    const popupContent = `
+                        <div class="custom-popup">
+                            <img src="${pin.img}" alt="${pin.name}" class="flower-image">
+                            <h3 class="flower-name">${pin.name}</h3>
+                            <p class="flower-date">Found on ${new Date(pin.created_at).toLocaleDateString()}</p>
+                        </div>
+                    `;
+                    
+                    // Add popup to marker
+                    marker.bindPopup(popupContent);
+                    
+                    // Add marker to map
+                    marker.addTo(map);
+                    markers.push(marker);
                 });
+                
+                // If we have markers and no user location yet, fit the map to show all markers
+                if (markers.length > 0 && !window.locationInitialized) {
+                    const group = L.featureGroup(markers);
+                    map.fitBounds(group.getBounds(), { padding: [30, 30] });
+                }
+                
             } catch (error) {
-                console.error("Error loading pins:", error);
+                console.error("Error loading flower pins:", error);
+                document.getElementById("pin-count").textContent = "Error loading discoveries";
             }
         }
 
-// Load Pins When Page Loads
-document.addEventListener("DOMContentLoaded", loadPins);
-
-
-
-    </script>
+        // Load all pins when the page loads
+        loadFlowerPins();
+    });
+</script>
