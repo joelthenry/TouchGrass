@@ -1,0 +1,44 @@
+<div class="flower-app-container">
+    <div class="flower-header">
+        <img src="/img/flower-logo.png" alt="FlowerFindr Logo" class="logo">
+        <h1>Join FlowerFindr</h1>
+        <p class="tagline">Create an account to start your botanical journey</p>
+    </div>
+
+    <div class="form-card">
+        <form action="/register" method="POST">
+            <div class="form-group">
+                <label for="username">Username</label>
+                <div class="input-wrapper">
+                    <i class="fa fa-user"></i>
+                    <input type="text" id="username" name="username" placeholder="Choose a username" required>
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label for="email">Email</label>
+                <div class="input-wrapper">
+                    <i class="fa fa-envelope"></i>
+                    <input type="email" id="email" name="email" placeholder="Enter your email" required>
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label for="password">Password</label>
+                <div class="input-wrapper">
+                    <i class="fa fa-lock"></i>
+                    <input type="password" id="password" name="password" placeholder="Create a password" required>
+                </div>
+            </div>
+            
+            <button type="submit" class="btn-primary">Create Account <i class="fa fa-seedling"></i></button>
+        </form>
+        
+        <div class="form-footer">
+            <p>Already have an account? <a href="/login" class="accent-link">Login here</a></p>
+        </div>
+    </div>
+
+    <div class="flower-decoration top-right"></div>
+    <div class="flower-decoration bottom-left"></div>
+</div>

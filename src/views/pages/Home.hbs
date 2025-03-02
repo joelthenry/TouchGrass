@@ -1,0 +1,83 @@
+<div class="flower-app-home">
+    {{#if user}}
+        <div class="user-welcome">
+            <div class="welcome-header">
+                <img src="/img/profile-icon.png" alt="Profile" class="profile-icon">
+                <h1>Hello, {{user.username}}!</h1>
+            </div>
+            <p class="user-email">{{user.email}}</p>
+            
+            <div class="quick-actions">
+                <a href="/identify" class="action-card">
+                    <i class="fa fa-camera"></i>
+                    <span>Identify a Flower</span>
+                </a>
+                <a href="/collection" class="action-card">
+                    <i class="fa fa-book"></i>
+                    <span>My Collection</span>
+                </a>
+                <a href="/explore" class="action-card">
+                    <i class="fa fa-compass"></i>
+                    <span>Explore Nearby</span>
+                </a>
+            </div>
+            
+            <div class="recent-activity">
+                <h2>Recent Discoveries</h2>
+                <div class="activity-empty">
+                    <i class="fa fa-leaf"></i>
+                    <p>No recent plant identifications</p>
+                    <a href="/identify" class="btn-secondary">Start Discovering</a>
+                </div>
+            </div>
+            
+            <div class="bottom-nav">
+                <a href="/home" class="bottom-nav-item active">
+                    <i class="fa fa-home"></i>
+                    <span>Home</span>
+                </a>
+                <a href="/identify" class="bottom-nav-item add-button">
+                    <div class="add-icon">
+                        <i class="fa fa-plus"></i>
+                    </div>
+                </a>
+                <a href="/profile" class="bottom-nav-item">
+                    <i class="fa fa-user"></i>
+                    <span>Profile</span>
+                </a>
+            </div>
+        </div>
+    {{else}}
+        <div class="welcome-container">
+            <div class="welcome-content">
+                <img src="/img/flower-logo-large.png" alt="FlowerFindr" class="hero-logo">
+                <h1>Welcome to FlowerFindr</h1>
+                <p class="hero-text">Discover the beautiful world of flowers around you with our plant identification technology</p>
+                
+                <div class="cta-buttons">
+                    <a href="/register" class="btn-primary">Get Started <i class="fa fa-arrow-right"></i></a>
+                    <a href="/login" class="btn-secondary">Sign In</a>
+                </div>
+                
+                <div class="feature-list">
+                    <div class="feature">
+                        <i class="fa fa-camera"></i>
+                        <p>Identify plants instantly with your camera</p>
+                    </div>
+                    <div class="feature">
+                        <i class="fa fa-map-marker-alt"></i>
+                        <p>Discover flowers native to your region</p>
+                    </div>
+                    <div class="feature">
+                        <i class="fa fa-book"></i>
+                        <p>Find your personal flower collection</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="flower-decoration left"></div>
+            <div class="flower-decoration right"></div>
+            <div class="wave-bottom"></div>
+        </div>
+    {{/if}}
+</div>

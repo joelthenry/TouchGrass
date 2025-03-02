@@ -24,6 +24,6 @@ Should:
 -Favorite FLower (Some sort of stats)
 
 Tasks:
--Design UI (plan and execute, react, Bootstrap)
+-Design UI (plan and execute, react, Bootstrap)git 
 -Train two models model flower no flower and flower classifier
 -Server & Database set up

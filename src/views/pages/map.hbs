@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Live Map</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+    <script src="/socket.io/socket.io.js"></script>
+    <style>
+        #map { height: 500px; width: 100%; }
+    </style>
+</head>
+<body>
+    <div id="map"></div>
+
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+    <script>
+        const map = L.map('map').setView([40.00743998148659, -105.26336185653743], 13); // Default location
+
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; OpenStreetMap contributors'
+        }).addTo(map);
+
+        const socket = io();
+
+        const flowerIcon = L.icon({
+            iconUrl: 'TouchGrass\src\img\pin.png', // Path to your custom image
+            iconSize: [40, 40], // Size of the icon [width, height]
+            iconAnchor: [20, 40], // Position relative to the marker point
+            popupAnchor: [0, -40] // Position relative to the popup
+        });
+
+        // Watch user location and send updates
+        navigator.geolocation.watchPosition((position) => {
+            const { latitude, longitude } = position.coords;
+            socket.emit('locationUpdate', { latitude, longitude });
+        });
+
+        // Receive live location updates
+        socket.on('updateLocation', (data) => {
+            L.marker([data.latitude, data.longitude]).addTo(map);
+            map.setView([data.latitude, data.longitude], 15);
+        });
+
+        navigator.geolocation.getCurrentPosition((position) => {
+        const { latitude, longitude } = position.coords;
+
+        navigator.geolocation.SavePosition((position) => {
+        position.coords = getCurrentPosition;
+        const L.marker([latitude, longitude], {icon: flowerIcon}).addTo(map);
+        map.setView([latitude, longitude], 15);
+        });
+
+
+    </script>
+</body>
+</html>
