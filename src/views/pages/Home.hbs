@@ -5,8 +5,7 @@
                 <img src="/img/profile-icon.png" alt="Profile" class="profile-icon">
                 <h1>Hello, {{user.username}}!</h1>
             </div>
-            <p class="user-email">{{user.email}}</p>
-            
+           
             <div class="quick-actions">
                 <a href="/identify" class="action-card">
                     <i class="fa fa-camera"></i>
@@ -46,6 +45,10 @@
                     <span>Profile</span>
                 </a>
             </div>
+        </div>
+        <div class="user-info">
+            <h1>Welcome, {{user.username}}</h1>
+            {{!-- <p class="user-email">{{user.email}}</p> --}}
         </div>
     {{else}}
         <div class="welcome-container">

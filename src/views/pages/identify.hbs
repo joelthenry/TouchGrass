@@ -64,6 +64,10 @@
 <script>
 // Inline script for maximum compatibility
 document.addEventListener('DOMContentLoaded', function() {
+    // Add this line to check if user is authenticated from the server-side template
+    const isAuthenticated = {{#if user}}true{{else}}false{{/if}};
+    console.log('Authentication status:', isAuthenticated ? 'Logged in' : 'Not logged in');
+    
     const videoElement = document.getElementById('camera-stream');
     const startButton = document.getElementById('start-camera');
     const statusDiv = document.getElementById('camera-status');
@@ -77,6 +81,8 @@ document.addEventListener('DOMContentLoaded', function() {
     
     let stream = null;
     let photoData = null;
+    let userLatitude = null;
+    let userLongitude = null;
     
     // Initially hide the video until camera starts
     videoElement.style.display = 'none';
@@ -88,6 +94,29 @@ document.addEventListener('DOMContentLoaded', function() {
         statusDiv.style.color = isError ? 'red' : 'green';
         console.log(message);
     }
+    
+    // Get the user's location when the page loads
+    function getUserLocation() {
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(
+                function(position) {
+                    userLatitude = position.coords.latitude;
+                    userLongitude = position.coords.longitude;
+                    console.log(`Location obtained: (${userLatitude}, ${userLongitude})`);
+                    updateStatus('Location detected');
+                },
+                function(error) {
+                    console.log('Error getting location:', error);
+                    updateStatus('Location not available', true);
+                }
+            );
+        } else {
+            console.log('Geolocation is not supported by this browser');
+        }
+    }
+
+    // Call this when the page loads
+    getUserLocation();
     
     // Start camera when button is clicked
     startButton.addEventListener('click', function() {
@@ -242,7 +271,7 @@ document.addEventListener('DOMContentLoaded', function() {
         saveBtn.disabled = true;
         saveBtn.innerHTML = '<i class="fa fa-spinner fa-spin"></i> Saving...';
         
-        // Save the photo to the server
+        // Save the photo to the server with location data
         fetch('/api/save-photo', {
             method: 'POST',
             headers: {
@@ -250,7 +279,9 @@ document.addEventListener('DOMContentLoaded', function() {
             },
             body: JSON.stringify({
                 image: photoData,
-                name: 'Captured Flower'
+                name: 'Captured Flower',
+                latitude: userLatitude,
+                longitude: userLongitude
             })
         })
         .then(response => {
@@ -267,29 +298,73 @@ document.addEventListener('DOMContentLoaded', function() {
             
             // Show identification message
             if (data.flowerName) {
-                updateStatus(`Identified as: ${data.flowerName}!`);
+                const confidencePercent = data.confidence ? Math.round(data.confidence * 100) : null;
+                const confidenceText = confidencePercent ? ` (${confidencePercent}% confidence)` : '';
+                
+                updateStatus(`Identified as: ${data.flowerName}${confidenceText}!`);
                 
                 // Create a success message with the flower name
                 const successMessage = document.createElement('div');
                 successMessage.className = 'success-message';
-                successMessage.innerHTML = `
-                    <div class="success-icon">✓</div>
-                    <div class="success-text">
-                        <h3>Flower Identified!</h3>
-                        <p>This appears to be a <strong>${data.flowerName}</strong></p>
-                    </div>
-                `;
+                
+                // Use the client-side isAuthenticated variable instead of data.savedToCollection
+                if (isAuthenticated && data.savedToCollection) {
+                    successMessage.innerHTML = `
+                        <div class="success-icon">✓</div>
+                        <div class="success-text">
+                            <h3>Flower Identified!</h3>
+                            <p>This appears to be a <strong>${data.flowerName}</strong>${confidenceText}</p>
+                            <p class="small-text">Saved to your collection</p>
+                        </div>
+                    `;
+                } else if (isAuthenticated) {
+                    successMessage.innerHTML = `
+                        <div class="success-icon">✓</div>
+                        <div class="success-text">
+                            <h3>Flower Identified!</h3>
+                            <p>This appears to be a <strong>${data.flowerName}</strong>${confidenceText}</p>
+                            <p class="small-text">Error saving to collection - please try again</p>
+                        </div>
+                    `;
+                } else {
+                    successMessage.innerHTML = `
+                        <div class="success-icon">✓</div>
+                        <div class="success-text">
+                            <h3>Flower Identified!</h3>
+                            <p>This appears to be a <strong>${data.flowerName}</strong>${confidenceText}</p>
+                            <p class="small-text">Log in to save this to your collection!</p>
+                        </div>
+                    `;
+                }
                 
                 // Insert before the preview controls
                 photoPreview.insertBefore(successMessage, document.querySelector('.preview-controls'));
+                
+                // For anonymous users, add login/register button
+                if (!isAuthenticated) {
+                    const loginButtons = document.createElement('div');
+                    loginButtons.className = 'login-prompt';
+                    loginButtons.innerHTML = `
+                        <a href="/login" class="btn-secondary">Login</a>
+                        <a href="/register" class="btn-primary">Sign Up</a>
+                    `;
+                    photoPreview.insertBefore(loginButtons, document.querySelector('.preview-controls'));
+                }
             } else {
                 updateStatus('Photo saved successfully!');
             }
-            
-            // Redirect to home after a delay
-            setTimeout(() => {
-                window.location.href = '/home';
-            }, 3000);
+
+            // Redirect after a delay (for authenticated users) or show login options
+            if (isAuthenticated) {
+                setTimeout(() => {
+                    window.location.href = '/profile';
+                }, 3000);
+            } else {
+                // For anonymous users, update save button to allow retry
+                saveBtn.disabled = false;
+                saveBtn.innerHTML = '<i class="fa fa-save"></i> Save Photo';
+                retakeBtn.innerHTML = '<i class="fa fa-redo"></i> New Photo';
+            }
         })
         .catch(error => {
             updateStatus('Error: ' + error.message, true);
@@ -352,7 +427,7 @@ document.addEventListener('DOMContentLoaded', function() {
 }
 
 .option-divider::before,
-.option-divider::after {
+<option-divider::after {
     content: '';
     flex: 1;
     border-bottom: 1px solid rgba(255,255,255,0.3);
@@ -443,5 +518,23 @@ document.addEventListener('DOMContentLoaded', function() {
 
 .hidden {
     display: none !important;
+}
+
+/* Add styles for login prompt */
+.login-prompt {
+    position: absolute;
+    bottom: 80px;
+    left: 0;
+    right: 0;
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+    padding: 0 20px;
+}
+
+.login-prompt a {
+    flex: 1;
+    text-align: center;
+    max-width: 150px;
 }
 </style>

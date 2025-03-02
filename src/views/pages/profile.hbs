@@ -40,7 +40,7 @@
         </div>
         
         <div class="tab-content" id="discoveries-tab">
-            {{#if user.discoveries}}
+            {{#if user.discoveries.length}}
                 <div class="discoveries-grid">
                     {{#each user.discoveries}}
                         <div class="discovery-card">
@@ -63,7 +63,7 @@
         </div>
         
         <div class="tab-content hidden" id="collection-tab">
-            {{#if user.collection}}
+            {{#if user.collection.length}}
                 <div class="collection-grid">
                     {{#each user.collection}}
                         <div class="collection-card">

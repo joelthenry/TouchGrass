@@ -2,6 +2,10 @@ document.addEventListener('DOMContentLoaded', function() {
     // Get all tab buttons
     const tabButtons = document.querySelectorAll('.tab-button');
     
+    // Show discoveries tab by default - make sure this is selected initially
+    document.getElementById('discoveries-tab').classList.remove('hidden');
+    document.querySelector('.tab-button[data-tab="discoveries"]').classList.add('active');
+    
     // Add click event listeners to each tab button
     tabButtons.forEach(button => {
         button.addEventListener('click', () => {

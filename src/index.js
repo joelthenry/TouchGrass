@@ -8,8 +8,39 @@ const bodyParser = require('body-parser');
 const session = require('express-session'); 
 const bcrypt = require('bcryptjs');
 const axios = require('axios'); 
+const http = require('http');
+const socketIO = require('socket.io');
+
 app.use(express.static('src/resources'));
 const apiRoutes = require('./routes/api'); 
+
+// Create HTTP server
+const server = http.createServer(app);
+
+// Create Socket.IO instance attached to the server
+const io = socketIO(server);
+
+// Add near the top of your file after imports
+const dbConfig = {
+    host: 'db',
+    port: 5432,
+    database: process.env.POSTGRES_DB,
+    user: process.env.POSTGRES_USER,
+    password: process.env.POSTGRES_PASSWORD
+};
+
+// Create a single database connection to be reused
+const db = pgp(dbConfig);
+
+// Test connection at startup
+db.connect()
+    .then(obj => {
+        console.log('Database connection established successfully');
+        obj.done(); // release the connection
+    })
+    .catch(error => {
+        console.error('ERROR connecting to database:', error);
+    });
 
 // Place this BEFORE any route definitions, near the top of your file:
 
@@ -30,6 +61,14 @@ app.use(bodyParser.urlencoded({
   limit: '50mb'
 }));
 
+// This should come BEFORE your route definitions
+app.use(session({
+    secret: process.env.SESSION_SECRET,
+    resave: false,
+    saveUninitialized: true,
+    cookie: { secure: false } // Set to true in production with HTTPS
+}));
+
 // Add this before the API routes registration:
 
 // Debug middleware for API requests
@@ -45,10 +84,18 @@ app.use('/api', (req, res, next) => {
   next();
 });
 
+// Make the io instance available to all routes
+app.use((req, res, next) => {
+  req.io = io;
+  next();
+});
+
 // Then register your routes AFTER these middleware configurations
 app.use('/api', apiRoutes);
 app.use(express.static(__dirname + '/')); 
 app.use(express.static(path.join(__dirname, 'public')));
+// Serve uploaded images
+app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 
 const hbs = handlebars.create({
     extname: 'hbs',
@@ -64,27 +111,6 @@ const hbs = handlebars.create({
         }
     }
 });
-
-// database configuration
-const dbConfig = {
-    host: 'db',
-    port: 5432,
-    database: process.env.POSTGRES_DB,
-    user: process.env.POSTGRES_USER,
-    password: process.env.POSTGRES_PASSWORD
-};
-
-const db = pgp(dbConfig);
-
-// test your database
-db.connect()
-    .then(obj => {
-        console.log('Database connection successful'); // you can view this message in the docker compose logs
-        obj.done(); // success, release the connection;
-    })
-    .catch(error => {
-        console.log('ERROR:', error.message || error);
-    });
 
 app.engine('hbs', hbs.engine);
 app.set('view engine', 'hbs');
@@ -112,6 +138,21 @@ app.use((req, res, next) => {
     next();
 });
 
+// Socket.IO connection handler
+io.on('connection', (socket) => {
+    console.log('A user connected', socket.id);
+
+    socket.on('locationUpdate', (data) => {
+        console.log('Location update received:', data);
+        // Broadcast the location to all clients
+        io.emit('updateLocation', data);
+    });
+
+    socket.on('disconnect', () => {
+        console.log('User disconnected');
+    });
+});
+
 const requireLogin = (req, res, next) => {
     if (!req.session.user) {
         return res.redirect('/home');
@@ -127,10 +168,72 @@ app.get('/', (req, res) => {
     res.redirect('/home');
 });
 
-app.get('/profile', requireLogin, (req, res) => {
-    res.render('pages/profile');
+app.get('/profile', requireLogin, async (req, res) => {
+    try {
+        // Get discoveries
+        const discoveries = await db.any(`
+            SELECT posts.img, flowers.name
+            FROM posts
+            JOIN flowers ON posts.flower_id = flowers.id
+            WHERE posts.user_id = $1
+            ORDER BY posts.id DESC
+        `, [req.session.user.id]);
+        
+        // Format discoveries
+        const formattedDiscoveries = discoveries.map(d => ({
+            imageUrl: d.img,
+            name: d.name,
+            date: 'Recently',
+            location: 'Your Garden'
+        }));
+        
+        // Get unique flowers for collection
+        const collection = await db.any(`
+            SELECT DISTINCT ON (flowers.id)
+                flowers.id,
+                flowers.name,
+                posts.img
+            FROM posts
+            JOIN flowers ON posts.flower_id = flowers.id
+            WHERE posts.user_id = $1
+            ORDER BY flowers.id, posts.id DESC
+        `, [req.session.user.id]);
+        
+        // Format collection
+        const formattedCollection = collection.map(c => ({
+            id: c.id,
+            name: c.name,
+            imageUrl: c.img,
+            scientificName: `${c.name.charAt(0).toUpperCase() + c.name.slice(1)} family`,
+            tags: ['Identified']
+        }));
+        
+        // Render with data
+        res.render('pages/profile', {
+            user: {
+                ...req.session.user,
+                discoveryCount: formattedDiscoveries.length,
+                collectionCount: formattedCollection.length,
+                badgeCount: 0,
+                discoveries: formattedDiscoveries,
+                collection: formattedCollection
+            }
+        });
+        
+    } catch (error) {
+        console.error('Error retrieving profile data:', error);
+        res.render('pages/profile', {
+            user: {
+                ...req.session.user,
+                discoveryCount: 0,
+                collectionCount: 0,
+                badgeCount: 0,
+                discoveries: [],
+                collection: []
+            }
+        });
+    }
 });
-
 
 app.get('/identify', (req, res) => {
     res.render('pages/identify');
@@ -208,7 +311,9 @@ app.post('/register', (req, res) => {
 
 if (require.main === module) {
     const port = process.env.PORT || 3000;
-    app.listen(port);
-  }
-  module.exports = app;
-console.log('Server is listening on port 3000');
+    server.listen(port, () => {
+        console.log(`Server is listening on port ${port}`);
+    });
+}
+
+module.exports = { app, server, io };
