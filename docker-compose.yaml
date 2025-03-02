@@ -17,7 +17,7 @@ services:
     depends_on:
       - db
     ports:
-      - '3000:3000'
+      - "${HOST_PORT:-3000}:${PORT:-3000}"
     volumes:
       - ./:/repository
     command: 'npm start' #'npm testandrun' for testing, 'npm start' otherwise
