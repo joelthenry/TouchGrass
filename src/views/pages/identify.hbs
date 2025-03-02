@@ -1,0 +1,92 @@
+<div class="flower-app-identify">
+    <div class="flower-header small">
+        <h1>Identify a Flower</h1>
+        <p class="tagline">Take a clear photo of a flower to identify it</p>
+    </div>
+    
+    <div class="camera-container">
+        <!-- Camera view when no photo has been taken -->
+        <div id="camera-view" class="camera-active">
+            <video id="camera-stream" autoplay playsinline></video>
+            <div class="camera-overlay">
+                <div class="camera-frame"></div>
+                <p class="camera-tip">Position the flower in the center</p>
+            </div>
+            <button id="capture-btn" class="capture-button">
+                <div class="capture-icon"></div>
+            </button>
+        </div>
+        
+        <!-- Preview after photo is taken -->
+        <div id="photo-preview" class="photo-preview hidden">
+            <canvas id="photo-canvas"></canvas>
+            <div class="preview-controls">
+                <button id="retake-btn" class="btn-outline">
+                    <i class="fa fa-redo"></i> Retake
+                </button>
+                <button id="confirm-btn" class="btn-primary">
+                    <i class="fa fa-check"></i> Identify
+                </button>
+            </div>
+        </div>
+        
+        <!-- Loading state during identification -->
+        <div id="loading-state" class="loading-state hidden">
+            <div class="spinner"></div>
+            <p>Identifying your flower...</p>
+        </div>
+        
+        <!-- Results after identification -->
+        <div id="result-view" class="result-view hidden">
+            <div class="result-header">
+                <img id="result-image" src="" alt="Your flower">
+            </div>
+            <div class="result-content">
+                <div class="result-info">
+                    <h2 id="flower-name">Beautiful Flower</h2>
+                    <p id="scientific-name" class="scientific-name">Plantus Exampleus</p>
+                    
+                    <div class="confidence-bar">
+                        <div class="confidence-label">
+                            <span>Match confidence:</span>
+                            <span id="confidence-percent">95%</span>
+                        </div>
+                        <div class="confidence-track">
+                            <div id="confidence-fill" class="confidence-fill" style="width: 95%"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="info-section">
+                        <h3>About this flower</h3>
+                        <p id="flower-description">Loading description...</p>
+                    </div>
+                </div>
+                
+                <div class="result-actions">
+                    <button id="save-btn" class="btn-primary">
+                        <i class="fa fa-bookmark"></i> Save to Collection
+                    </button>
+                    <button id="new-search-btn" class="btn-outline">
+                        <i class="fa fa-camera"></i> Identify Another
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="bottom-nav">
+        <a href="/home" class="bottom-nav-item">
+            <i class="fa fa-home"></i>
+            <span>Home</span>
+        </a>
+        <a href="/identify" class="bottom-nav-item add-button active">
+            <div class="add-icon">
+                <i class="fa fa-plus"></i>
+            </div>
+        </a>
+        <a href="/profile" class="bottom-nav-item">
+            <i class="fa fa-user"></i>
+            <span>Profile</span>
+        </a>
+    </div>
+</div>

@@ -13,6 +13,7 @@ app.use(express.static('src/resources'));
 
 
 app.use(express.static(__dirname + '/')); 
+
 const hbs = handlebars.create({
     extname: 'hbs',
     layoutsDir: __dirname + '/views/layouts',
