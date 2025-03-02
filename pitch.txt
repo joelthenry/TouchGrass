@@ -5,10 +5,19 @@ gist:
   -AI that identifies what flower you found
   -Find more flowers around you
 
+Purpose:
+  -Gets people to go outside.
+  -Builds flower database in local areas.
+
+Future Profit:
+  -Can be used for future research.
+  -Countiuous Machine Learning, can begin to recognize flower health.
+
 AI:
 
 Web-Dev:
+  -hbs front end
+  -PostgreSQL db
+  -OpenStreetMap, Leaflet
 
 Our Path:
-
-Future Uses:
