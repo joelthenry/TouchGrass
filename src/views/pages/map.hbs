@@ -78,9 +78,22 @@
             map.setView([latitude, longitude], 15);
         }
 
-        navigator.geolocation.getCurrentPosition(SavePosition, (error) => {
-            console.error("Error getting location:", error.message);
-        });
+        async function loadPins() {
+            try {
+                const response = await fetch("/getPins"); // Fetch Data from API
+                const locations = await response.json();  // Convert to JSON
+
+                locations.forEach(({ latitude, longitude }) => {
+                    L.marker([latitude, longitude]).addTo(map) // Add Pin to Map
+                        .bindPopup(`Lat: ${latitude}, Lng: ${longitude}`);
+                });
+            } catch (error) {
+                console.error("Error loading pins:", error);
+            }
+        }
+
+// Load Pins When Page Loads
+document.addEventListener("DOMContentLoaded", loadPins);
 
 
 
