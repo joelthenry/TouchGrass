@@ -6,7 +6,7 @@ const axios = require('axios');
 const { v4: uuidv4 } = require('uuid');
 
 // Ensure uploads directory exists
-const uploadsDir = path.join(__dirname, '../public/uploads');
+const uploadsDir = "/repository/uploads";
 if (!fs.existsSync(uploadsDir)) {
     fs.mkdirSync(uploadsDir, { recursive: true });
 }
@@ -143,6 +143,19 @@ router.post('/save-photo', async (req, res) => {
                 }
             }
             
+            const flowerApiUrl = 'http://flower-classifier:8000/detect_flower';
+            try {
+                const flowerResponse = await axios.post(flowerApiUrl, {
+                    image_path: filepath
+                });
+                
+                // Use the classification result
+                console.log('Flower classification:', flowerResponse.data);
+                // Update the database with the classification result
+            } catch (apiError) {
+                console.error('Error classifying image:', apiError);
+            }
+
             return res.status(200).json({ 
                 success: true, 
                 filename,
