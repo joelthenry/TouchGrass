@@ -67,6 +67,9 @@ detection_transform = transforms.Compose([
 flower_class_indices = list(range(985, 999))
 confidence_threshold = 0.2  # Only consider a detection if confidence >= 20%
 
+
+
+
 # -------------------------------
 # FastAPI Endpoint
 # -------------------------------
@@ -95,6 +98,23 @@ async def detect_flower(request: PredictionRequest):
 
     predicted_class = classes[predicted.item()]
     confidence_score = round(confidence_value, 4)
+
+    # -------------------------------
+    # Flower Detection
+    # -------------------------------
+    # Run object detection on the image
+    detection_input = detection_transform(image).unsqueeze(0).to(device)
+    detection_outputs = object_detector(detection_input)
+    detection_probs = F.softmax(detection_outputs, dim=1)
+    detection_confidence = detection_probs[:, flower_class_indices].max().item()
+
+    # Check if the image likely contains a flower
+    if detection_confidence >= confidence_threshold:
+        return {
+            "predicted_class": predicted_class,
+            "confidence": confidence_score,
+            "all_probabilities": {}
+        }
     
     # Create a dictionary of all class probabilities
     class_probabilities = {classes[i]: round(class_probs[0][i].item(), 4) for i in range(len(classes))}
