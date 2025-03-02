@@ -152,49 +152,50 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Save photo
     saveBtn.addEventListener('click', function() {
-        if (!photoData) {
-            updateStatus('No photo to save', true);
-            return;
-        }
-        
-        updateStatus('Saving photo...');
-        console.log('Photo data length:', photoData.length);
-        
-        // Debugging info - log the first part of the photoData
-        console.log('Photo data preview:', photoData.substring(0, 50) + '...');
-        
-        // Make sure you're sending a proper JSON object with the correct headers
-        fetch('/api/save-photo', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                image: photoData,
-                name: 'Captured Flower'
-            })
+    if (!photoData) {
+        updateStatus('No photo to save', true);
+        return;
+    }
+    
+    updateStatus('Saving photo...');
+    
+    // Skip the test step and directly save the photo
+    // First fetch the ping endpoint to verify API is working
+    fetch('/api/ping')
+        .then(response => response.json())
+        .then(data => {
+            console.log('API ping successful:', data);
+            
+            // Now try to save the photo
+            return fetch('/api/save-photo', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    image: photoData,
+                    name: 'Captured Flower'
+                })
+            });
         })
         .then(response => {
-            console.log('Response status:', response.status);
-            
+            console.log('Photo save response status:', response.status);
             if (!response.ok) {
                 return response.text().then(text => {
-                    console.log('Error response body:', text);
-                    throw new Error(`HTTP error! status: ${response.status}`);
+                    throw new Error(`HTTP error! status: ${response.status}, body: ${text}`);
                 });
             }
             return response.json();
         })
         .then(data => {
-            console.log('Success response:', data);
+            console.log('Photo saved successfully:', data);
             updateStatus('Photo saved successfully!');
-            alert('Photo saved successfully!');
         })
         .catch(error => {
-            updateStatus('Error saving photo: ' + error.message, true);
+            updateStatus('Error: ' + error.message, true);
             console.error('Save error:', error);
         });
-    });
+});
 });
 </script>
 

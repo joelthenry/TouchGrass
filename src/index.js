@@ -30,6 +30,21 @@ app.use(bodyParser.urlencoded({
   limit: '50mb'
 }));
 
+// Add this before the API routes registration:
+
+// Debug middleware for API requests
+app.use('/api', (req, res, next) => {
+  console.log('API Request received:', {
+    method: req.method,
+    path: req.path,
+    contentType: req.headers['content-type'],
+    contentLength: req.headers['content-length'],
+    hasBody: !!req.body,
+    bodySize: req.body ? Object.keys(req.body).length : 0
+  });
+  next();
+});
+
 // Then register your routes AFTER these middleware configurations
 app.use('/api', apiRoutes);
 app.use(express.static(__dirname + '/')); 
