@@ -143,18 +143,80 @@ router.post('/save-photo', async (req, res) => {
                 }
             }
             
-            const flowerApiUrl = 'http://flower-classifier:8000/detect_flower';
-            try {
-                const flowerResponse = await axios.post(flowerApiUrl, {
-                    image_path: filepath
-                });
-                
-                // Use the classification result
-                console.log('Flower classification:', flowerResponse.data);
-                // Update the database with the classification result
-            } catch (apiError) {
-                console.error('Error classifying image:', apiError);
+            // Replace this section in your save-photo endpoint:
+
+const flowerApiUrl = 'http://flower-classifier:8000/detect_flower';
+try {
+    const flowerResponse = await axios.post(flowerApiUrl, {
+        image_path: filepath
+    });
+    
+    // Use the classification result
+    console.log('Flower classification:', flowerResponse.data);
+    
+    // Get the predicted flower class and confidence (highest probability)
+    const predictedClass = flowerResponse.data.predicted_class;
+    const confidence = flowerResponse.data.confidence;
+    
+    // If user is logged in, update the database with the classification result
+    if (req.session && req.session.user && req.session.user.id) {
+        try {
+            // Update the flower name in the database based on the ML prediction
+            const flowerName = predictedClass.charAt(0).toUpperCase() + predictedClass.slice(1);
+            
+            // Get or create the flower in the database
+            const pgp = require('pg-promise')();
+            const dbConfig = {
+                host: 'db',
+                port: 5432,
+                database: process.env.POSTGRES_DB,
+                user: process.env.POSTGRES_USER,
+                password: process.env.POSTGRES_PASSWORD
+            };
+            const db = pgp(dbConfig);
+            
+            const flowerResult = await db.oneOrNone('SELECT id FROM flowers WHERE name = $1', [flowerName]);
+            let flowerId;
+            
+            if (flowerResult) {
+                flowerId = flowerResult.id;
+            } else {
+                const newFlower = await db.one(
+                    'INSERT INTO flowers(name) VALUES($1) RETURNING id', 
+                    [flowerName]
+                );
+                flowerId = newFlower.id;
             }
+            
+            // Update the most recently added post for this user
+            await db.none(
+                'UPDATE posts SET flower_id = $1 WHERE user_id = $2 AND img = $3',
+                [flowerId, req.session.user.id, `/uploads/${filename}`]
+            );
+            
+            console.log(`Updated flower classification: ${flowerName} (confidence: ${confidence})`);
+        } catch (dbError) {
+            console.error('Database error updating classification:', dbError);
+        }
+    }
+    
+    // Return the classification results along with the file info
+    return res.status(200).json({ 
+        success: true, 
+        filename,
+        flowerName: predictedClass.charAt(0).toUpperCase() + predictedClass.slice(1),
+        confidence: confidence, // This is the highest probability rating
+        message: `Identified as ${predictedClass.charAt(0).toUpperCase() + predictedClass.slice(1)} (${Math.round(confidence * 100)}% confidence)`
+    });
+} catch (apiError) {
+    console.error('Error classifying image:', apiError);
+    // Continue even if classification fails
+    return res.status(200).json({ 
+        success: true, 
+        filename,
+        message: 'Photo saved successfully (classification failed)'
+    });
+}
 
             return res.status(200).json({ 
                 success: true, 

@@ -8,7 +8,22 @@
         <!-- Camera view -->
         <div id="camera-view">
             <video id="camera-stream" autoplay playsinline></video>
-            <button id="start-camera" class="btn-primary">Enable Camera</button>
+            
+            <div class="camera-options">
+                <button id="start-camera" class="btn-primary">
+                    <i class="fa fa-camera"></i> Enable Camera
+                </button>
+                
+                <div class="option-divider">
+                    <span>OR</span>
+                </div>
+                
+                <label for="file-upload" class="btn-secondary file-upload-btn">
+                    <i class="fa fa-upload"></i> Upload Photo
+                </label>
+                <input type="file" id="file-upload" accept="image/*" style="display: none;">
+            </div>
+            
             <div id="camera-status"></div>
             <button id="capture-btn" class="capture-button hidden">
                 <div class="capture-icon"></div>
@@ -58,6 +73,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const photoCanvas = document.getElementById('photo-canvas');
     const retakeBtn = document.getElementById('retake-btn');
     const saveBtn = document.getElementById('save-btn');
+    const fileUpload = document.getElementById('file-upload');
     
     let stream = null;
     let photoData = null;
@@ -79,19 +95,26 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // Simple camera request
         if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
-            navigator.mediaDevices.getUserMedia({ video: true })
+            navigator.mediaDevices.getUserMedia({ 
+                video: { 
+                    facingMode: 'environment',  // Prefer rear camera
+                    width: { ideal: 1280 },
+                    height: { ideal: 720 }
+                } 
+            })
                 .then(function(streamObj) {
                     stream = streamObj;
                     videoElement.srcObject = stream;
                     videoElement.style.display = 'block';
-                    startButton.style.display = 'none';
+                    
+                    // Hide the camera options
+                    document.querySelector('.camera-options').style.display = 'none';
+                    
                     captureBtn.classList.remove('hidden');
                     updateStatus('Camera active');
                     
                     // Log success
                     console.log('Camera successfully started');
-                    console.log('Stream:', stream);
-                    console.log('Video tracks:', stream.getVideoTracks());
                 })
                 .catch(function(err) {
                     updateStatus('Camera error: ' + err.name + ' - ' + err.message, true);
@@ -100,6 +123,62 @@ document.addEventListener('DOMContentLoaded', function() {
         } else {
             updateStatus('Your browser does not support camera access', true);
         }
+    });
+    
+    // Handle file upload
+    fileUpload.addEventListener('change', function(e) {
+        if (!e.target.files.length) return;
+        
+        const file = e.target.files[0];
+        
+        // Check if file is an image
+        if (!file.type.startsWith('image/')) {
+            updateStatus('Please select an image file', true);
+            return;
+        }
+        
+        updateStatus('Processing uploaded image...');
+        
+        // Read the file as data URL
+        const reader = new FileReader();
+        
+        reader.onload = function(event) {
+            // Create an image element to get dimensions
+            const img = new Image();
+            
+            img.onload = function() {
+                // Get the uploaded image dimensions
+                const context = photoCanvas.getContext('2d');
+                photoCanvas.width = img.width;
+                photoCanvas.height = img.height;
+                
+                // Draw the image to canvas
+                context.drawImage(img, 0, 0);
+                
+                // Save the photo data
+                photoData = photoCanvas.toDataURL('image/jpeg');
+                
+                // Show preview
+                cameraView.classList.add('hidden');
+                photoPreview.classList.remove('hidden');
+                
+                updateStatus('Image uploaded successfully');
+                
+                // Clear the file input for future uploads
+                fileUpload.value = '';
+            };
+            
+            img.src = event.target.result;
+            
+            // Also save this as our photo data in case canvas processing fails
+            photoData = event.target.result;
+        };
+        
+        reader.onerror = function() {
+            updateStatus('Error reading file', true);
+        };
+        
+        reader.readAsDataURL(file);
     });
     
     // Capture photo
@@ -142,8 +221,10 @@ document.addEventListener('DOMContentLoaded', function() {
         photoPreview.classList.add('hidden');
         cameraView.classList.remove('hidden');
         
-        // Restart camera
-        startButton.style.display = 'block';
+        // Show camera options again
+        document.querySelector('.camera-options').style.display = 'flex';
+        
+        // Reset video and buttons
         videoElement.style.display = 'none';
         captureBtn.classList.add('hidden');
         
@@ -152,31 +233,25 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Save photo
     saveBtn.addEventListener('click', function() {
-    if (!photoData) {
-        updateStatus('No photo to save', true);
-        return;
-    }
-    
-    updateStatus('Saving photo...');
-    
-    // Skip the test step and directly save the photo
-    // First fetch the ping endpoint to verify API is working
-    fetch('/api/ping')
-        .then(response => response.json())
-        .then(data => {
-            console.log('API ping successful:', data);
-            
-            // Now try to save the photo
-            return fetch('/api/save-photo', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    image: photoData,
-                    name: 'Captured Flower'
-                })
-            });
+        if (!photoData) {
+            updateStatus('No photo to save', true);
+            return;
+        }
+        
+        updateStatus('Saving photo...');
+        saveBtn.disabled = true;
+        saveBtn.innerHTML = '<i class="fa fa-spinner fa-spin"></i> Saving...';
+        
+        // Save the photo to the server
+        fetch('/api/save-photo', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                image: photoData,
+                name: 'Captured Flower'
+            })
         })
         .then(response => {
             console.log('Photo save response status:', response.status);
@@ -189,13 +264,40 @@ document.addEventListener('DOMContentLoaded', function() {
         })
         .then(data => {
             console.log('Photo saved successfully:', data);
-            updateStatus('Photo saved successfully!');
+            
+            // Show identification message
+            if (data.flowerName) {
+                updateStatus(`Identified as: ${data.flowerName}!`);
+                
+                // Create a success message with the flower name
+                const successMessage = document.createElement('div');
+                successMessage.className = 'success-message';
+                successMessage.innerHTML = `
+                    <div class="success-icon">✓</div>
+                    <div class="success-text">
+                        <h3>Flower Identified!</h3>
+                        <p>This appears to be a <strong>${data.flowerName}</strong></p>
+                    </div>
+                `;
+                
+                // Insert before the preview controls
+                photoPreview.insertBefore(successMessage, document.querySelector('.preview-controls'));
+            } else {
+                updateStatus('Photo saved successfully!');
+            }
+            
+            // Redirect to home after a delay
+            setTimeout(() => {
+                window.location.href = '/home';
+            }, 3000);
         })
         .catch(error => {
             updateStatus('Error: ' + error.message, true);
             console.error('Save error:', error);
+            saveBtn.disabled = false;
+            saveBtn.innerHTML = '<i class="fa fa-save"></i> Save Photo';
         });
-});
+    });
 });
 </script>
 
@@ -230,11 +332,42 @@ document.addEventListener('DOMContentLoaded', function() {
     object-fit: cover;
 }
 
-#start-camera {
-    position: absolute;
-    padding: 12px 24px;
-    font-size: 16px;
+.camera-options {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    align-items: center;
+    padding: 20px;
+    background-color: rgba(0,0,0,0.7);
+    border-radius: 12px;
+    max-width: 80%;
     z-index: 10;
+}
+
+.option-divider {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    margin: 5px 0;
+}
+
+.option-divider::before,
+.option-divider::after {
+    content: '';
+    flex: 1;
+    border-bottom: 1px solid rgba(255,255,255,0.3);
+}
+
+.option-divider span {
+    padding: 0 10px;
+    color: white;
+    font-size: 14px;
+}
+
+.file-upload-btn {
+    cursor: pointer;
+    width: 100%;
+    text-align: center;
 }
 
 #camera-status {
@@ -290,6 +423,7 @@ document.addEventListener('DOMContentLoaded', function() {
     width: 100%;
     height: 100%;
     object-fit: contain;
+    background-color: #000;
 }
 
 .preview-controls {

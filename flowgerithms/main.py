@@ -82,37 +82,25 @@ async def detect_flower(request: PredictionRequest):
     except Exception as e:
         raise HTTPException(status_code=400, detail=f"Error loading image: {e}")
 
-    # Step 1: Check if the image contains a flower using the object detector.
-    detect_input = detection_transform(image).unsqueeze(0).to(device)
-    with torch.no_grad():
-        detection_outputs = object_detector(detect_input)
-        # detection_outputs is a tensor of logits for ImageNet classes.
-        probs = F.softmax(detection_outputs[0], dim=0)
-        # Get the top 5 predictions.
-        top_probs, top_indices = torch.topk(probs, 5)
-
-    # For debugging (optional), you could print top_indices and top_probs.
-    # print("Top 5 indices:", top_indices.tolist(), "Top 5 probs:", top_probs.tolist())
-
-    # Check if any of the top predictions correspond to a flower class.
-    detected_flower = False
-    for prob, idx in zip(top_probs, top_indices):
-        if idx.item() in flower_class_indices and prob.item() >= confidence_threshold:
-            detected_flower = True
-            break
-
-    # If no flower is detected, return null.
-    if not detected_flower:
-        return {"predicted_class": None}
-
-    # Step 2: If a flower is detected, run classification using your trained model.
+    # Always run classification using your trained model, skipping detection step
     class_input = classification_transform(image).unsqueeze(0).to(device)
+    
     with torch.no_grad():
         outputs = flower_model(class_input)
         class_probs = F.softmax(outputs, dim=1)
+        
+        # Get the highest probability value and its index
         confidence, predicted = torch.max(class_probs, 1)
+        confidence_value = confidence.item()  # This is the highest probability
 
     predicted_class = classes[predicted.item()]
-    confidence_score = round(confidence.item(), 4)
+    confidence_score = round(confidence_value, 4)
+    
+    # Create a dictionary of all class probabilities
+    class_probabilities = {classes[i]: round(class_probs[0][i].item(), 4) for i in range(len(classes))}
 
-    return {"predicted_class": predicted_class, "confidence": confidence_score}
+    return {
+        "predicted_class": predicted_class,
+        "confidence": confidence_score,
+        "all_probabilities": class_probabilities
+    }
