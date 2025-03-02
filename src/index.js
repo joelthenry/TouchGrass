@@ -94,6 +94,14 @@ app.get('/login', (req, res) => {
     res.render('pages/login', { title: 'Login' });
 });
 
+app.get('/identify', (req, res) => {
+    res.render('pages/identify');
+});
+
+app.get('/map', (req, res) => {
+    res.render('pages/map');
+});
+
 app.get('/register', (req, res) => {
     res.render('pages/register');
 });
