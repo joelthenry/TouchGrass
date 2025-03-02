@@ -49,11 +49,7 @@ app.use(bodyParser.json()); // specify the usage of JSON for parsing request bod
 app.use(session({
     secret: process.env.SESSION_SECRET || 'default_secret',
     resave: false,
-    saveUninitialized: false,
-    //Wasn;t sure if we needed cookies or not so I included it for now
-    // cookie: {
-    //     maxAge: 1000 * 60 * 60 * 24 // 24 hours
-    // }
+    saveUninitialized: false
 }));
 
 app.use(
@@ -70,10 +66,6 @@ app.get('/', (req, res) => {
     res.redirect('/home');
 });
 
-app.get('/register', (req, res) => {
-    res.render('pages/register');
-});
-
 app.get('/home', (req, res) => {
     //pass the user to home screen only if it already exists
     if (!req.session.user) {
@@ -85,6 +77,52 @@ app.get('/home', (req, res) => {
             user: req.session.user
         });
     }
+});
+
+app.get('/login', (req, res) => {
+    res.render('pages/login');
+});
+
+app.post('/login', (req, res) => {
+    const email = req.body.email;
+    const password = req.body.password;
+
+    db.one('SELECT * FROM users WHERE email = $1', email)
+        .then(user => {
+            bcrypt.compare(password, user.password, (err, result) => {
+                if (result) {
+                    req.session.user = user;
+                    res.redirect('/home');
+                } else {
+                    res.redirect('/login');
+                }
+            });
+        })
+        .catch(error => {
+            console.log('ERROR:', error.message || error);
+            res.redirect('/login');
+        });
+});
+
+app.get('/register', (req, res) => {
+    res.render('pages/register');
+});
+
+app.post('/register', (req, res) => {
+    const email = req.body.email;
+    const password = req.body.password;
+    const username = req.body.username;
+
+    bcrypt.hash(password, 10, (err, hash) => {
+        db.none('INSERT INTO users(email, username, password) VALUES($1, $2)', [email, username, hash])
+            .then(() => {
+                res.redirect('/login');
+            })
+            .catch(error => {
+                console.log('ERROR:', error.message || error);
+                res.redirect('/register');
+            });
+    });
 });
 
 if (require.main === module) {
