@@ -160,6 +160,16 @@ const requireLogin = (req, res, next) => {
     next();
 };
 
+app.get("/getPins", async (req, res) => {
+    try {
+        const result = await db.any("SELECT latitude, longitude FROM posts"); // Query DB
+        res.json(result); // Send JSON response
+    } catch (err) {
+        console.error("Database error:", err);
+        res.status(500).json({ error: "Internal Server Error" });
+    }
+});
+
 app.get('/welcome', (req, res) => {
     res.json({ status: 'success', message: 'Welcome!' });
 });
@@ -241,6 +251,7 @@ app.get('/identify', (req, res) => {
 
 app.get('/explore', (req, res) => {
     res.render('pages/map');
+
 });
 
 
