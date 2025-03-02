@@ -1,3 +1,7 @@
+<!-- Add Leaflet CSS and JS for maps -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
+<script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+
 <div class="flower-app-profile">
     <div class="profile-header">
         <div class="profile-cover">
@@ -43,7 +47,11 @@
             {{#if user.discoveries.length}}
                 <div class="discoveries-list">
                     {{#each user.discoveries}}
-                        <div class="discovery-item">
+                        <div class="discovery-item" 
+                             data-lat="{{this.latitude}}" 
+                             data-lng="{{this.longitude}}" 
+                             data-name="{{this.name}}" 
+                             data-date="{{this.date}}">
                             <div class="flower-icon">
                                 <i class="fa fa-seedling"></i>
                             </div>
@@ -51,6 +59,9 @@
                                 <h3>{{this.name}}</h3>
                                 <p class="discovery-date">{{this.date}}</p>
                                 <p class="discovery-location"><i class="fa fa-map-marker-alt"></i> {{this.location}}</p>
+                            </div>
+                            <div class="discovery-action">
+                                <i class="fa fa-map-pin"></i>
                             </div>
                         </div>
                     {{/each}}
@@ -116,6 +127,22 @@
     </div>
     
     <div class="flower-decoration top-right"></div>
+    
+    <!-- Add Map Modal -->
+    <div id="map-modal" class="map-modal">
+        <div class="map-container">
+            <div class="map-header">
+                <h3 id="map-title">Flower Location</h3>
+                <button class="close-map-btn"><i class="fa fa-times"></i></button>
+            </div>
+            <div id="discovery-map"></div>
+            <div class="map-info">
+                <p id="map-flower-name"></p>
+                <p id="map-date"></p>
+                <p id="map-coordinates"></p>
+            </div>
+        </div>
+    </div>
 </div>
 
 <style>
@@ -227,6 +254,98 @@
         background-color: #fff3e0;
         color: #ff9800;
     }
+    
+    .discovery-item {
+        display: flex;
+        align-items: center;
+        padding: 15px;
+        background-color: #fff;
+        border-radius: 12px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        cursor: pointer;
+        position: relative;
+        transition: transform 0.2s, box-shadow 0.2s;
+    }
+    
+    .discovery-item:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    }
+    
+    .discovery-action {
+        color: #4caf50;
+        width: 30px;
+        height: 30px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    /* Map Modal Styles */
+    .map-modal {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0,0,0,0.6);
+        z-index: 1000;
+        display: none;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    .map-modal.active {
+        display: flex;
+    }
+    
+    .map-container {
+        background-color: white;
+        width: 90%;
+        max-width: 600px;
+        border-radius: 12px;
+        overflow: hidden;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.25);
+        display: flex;
+        flex-direction: column;
+    }
+    
+    .map-header {
+        padding: 15px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border-bottom: 1px solid #eee;
+    }
+    
+    .map-header h3 {
+        margin: 0;
+        font-size: 18px;
+        color: #333;
+    }
+    
+    .close-map-btn {
+        background: none;
+        border: none;
+        font-size: 20px;
+        cursor: pointer;
+        color: #666;
+    }
+    
+    #discovery-map {
+        height: 300px;
+        width: 100%;
+    }
+    
+    .map-info {
+        padding: 15px;
+        background-color: #f9f9f9;
+    }
+    
+    .map-info p {
+        margin: 5px 0;
+        font-size: 14px;
+    }
 </style>
 
 <script>
@@ -260,5 +379,153 @@ document.addEventListener('DOMContentLoaded', function() {
         else if (flowerName.includes('sunflower')) icon.classList.add('flower-sunflower');
         else if (flowerName.includes('dandelion')) icon.classList.add('flower-dandelion');
     });
+    
+    // Map Modal Functionality - COMPLETELY REWRITTEN
+    const mapModal = document.getElementById('map-modal');
+    const closeMapBtn = document.querySelector('.close-map-btn');
+    let currentMap = null; // We'll create a new one each time
+    
+    // Function to safely destroy any map
+    function destroyMap() {
+        try {
+            if (currentMap) {
+                currentMap.off();
+                currentMap.remove();
+                currentMap = null;
+            }
+            
+            // Also remove the map container to be extra safe
+            const oldMapContainer = document.getElementById('discovery-map-container');
+            if (oldMapContainer) {
+                oldMapContainer.innerHTML = '';
+            }
+        } catch (err) {
+            console.error('Error destroying map:', err);
+        }
+    }
+    
+    // This will be called when user clicks on a discovery
+    function showMapModal(lat, lng, flowerName, date) {
+        console.log('Showing map for:', { lat, lng, flowerName, date });
+        
+        try {
+            // First, destroy any existing map
+            destroyMap();
+            
+            // Update info text
+            document.getElementById('map-flower-name').textContent = `Flower: ${flowerName}`;
+            document.getElementById('map-date').textContent = `Discovered: ${date}`;
+            document.getElementById('map-coordinates').textContent = `Location: ${lat.toFixed(4)}, ${lng.toFixed(4)}`;
+            document.getElementById('map-title').textContent = `${flowerName} Location`;
+            
+            // Show the modal first
+            mapModal.classList.add('active');
+            
+            // Wait a moment before creating the map (let the modal render first)
+            setTimeout(() => {
+                try {
+                    // Get the existing container
+                    const mapContainer = document.querySelector('.map-container');
+                    const existingMapDiv = document.getElementById('discovery-map');
+                    
+                    // Remove it completely if it exists
+                    if (existingMapDiv) {
+                        existingMapDiv.parentNode.removeChild(existingMapDiv);
+                    }
+                    
+                    // Create a wrapper div with a unique ID each time
+                    const mapWrapperDiv = document.createElement('div');
+                    mapWrapperDiv.id = 'discovery-map-container';
+                    mapWrapperDiv.style.position = 'relative';
+                    
+                    // Create a completely new map div with a unique ID based on timestamp
+                    const newMapId = 'map-' + Date.now();
+                    const newMapDiv = document.createElement('div');
+                    newMapDiv.id = newMapId;
+                    newMapDiv.style.height = '300px';
+                    newMapDiv.style.width = '100%';
+                    
+                    // Append the new map div to the wrapper
+                    mapWrapperDiv.appendChild(newMapDiv);
+                    
+                    // Insert the wrapper between header and info
+                    const mapInfo = mapContainer.querySelector('.map-info');
+                    mapContainer.insertBefore(mapWrapperDiv, mapInfo);
+                    
+                    // Create a new map with the unique ID
+                    console.log('Creating new map with ID:', newMapId);
+                    currentMap = L.map(newMapId, {
+                        center: [lat, lng],
+                        zoom: 14,
+                        zoomControl: true,
+                        attributionControl: true
+                    });
+                    
+                    // Add the tile layer
+                    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                    }).addTo(currentMap);
+                    
+                    // Add marker
+                    L.marker([lat, lng]).addTo(currentMap);
+                    
+                    // Make sure the map renders correctly
+                    currentMap.invalidateSize();
+                    
+                } catch (innerError) {
+                    console.error('Error creating map:', innerError);
+                    document.getElementById('map-flower-name').textContent = 'Error: Could not create map';
+                }
+            }, 300);
+            
+        } catch (error) {
+            console.error('Map initialization error:', error);
+            document.getElementById('map-title').textContent = 'Error Loading Map';
+            document.getElementById('map-flower-name').textContent = 'Could not load map data: ' + error.message;
+        }
+    }
+    
+    // Add click event to discovery items
+    const discoveryItems = document.querySelectorAll('.discovery-item');
+    console.log('Found', discoveryItems.length, 'discovery items');
+    
+    discoveryItems.forEach((item, index) => {
+        item.addEventListener('click', function() {
+            const lat = parseFloat(this.getAttribute('data-lat'));
+            const lng = parseFloat(this.getAttribute('data-lng'));
+            const name = this.getAttribute('data-name');
+            const date = this.getAttribute('data-date');
+            
+            // Only show map if coordinates exist
+            if (!isNaN(lat) && !isNaN(lng)) {
+                showMapModal(lat, lng, name, date);
+            } else {
+                document.getElementById('map-title').textContent = 'No Location Data';
+                document.getElementById('map-flower-name').textContent = 'This discovery has no location information';
+                document.getElementById('map-date').textContent = date;
+                document.getElementById('map-coordinates').textContent = '';
+                mapModal.classList.add('active');
+            }
+        });
+    });
+    
+    // Close map modal and destroy the map
+    function closeMapModal() {
+        mapModal.classList.remove('active');
+        setTimeout(destroyMap, 300);
+    }
+    
+    // Close map modal when clicking the close button
+    closeMapBtn.addEventListener('click', closeMapModal);
+    
+    // Close map modal when clicking outside the map container
+    mapModal.addEventListener('click', function(e) {
+        if (e.target === mapModal) {
+            closeMapModal();
+        }
+    });
+    
+    // Also destroy map when the page unloads
+    window.addEventListener('beforeunload', destroyMap);
 });
 </script>

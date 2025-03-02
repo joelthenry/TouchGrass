@@ -180,24 +180,39 @@ app.get('/', (req, res) => {
 
 app.get('/profile', requireLogin, async (req, res) => {
     try {
-        // Get discoveries
+        // Get discoveries - ADD LATITUDE AND LONGITUDE TO QUERY
         const discoveries = await db.any(`
-            SELECT posts.img, flowers.name
+            SELECT 
+                posts.img, 
+                flowers.name,
+                posts.latitude,
+                posts.longitude,
+                posts.created_at
             FROM posts
             JOIN flowers ON posts.flower_id = flowers.id
             WHERE posts.user_id = $1
-            ORDER BY posts.id DESC
+            ORDER BY posts.created_at DESC
         `, [req.session.user.id]);
         
-        // Format discoveries
-        const formattedDiscoveries = discoveries.map(d => ({
-            imageUrl: d.img,
-            name: d.name,
-            date: 'Recently',
-            location: 'Your Garden'
-        }));
+        // Format discoveries - INCLUDE LATITUDE AND LONGITUDE with proper null checking
+        const formattedDiscoveries = discoveries.map(d => {
+            // Ensure latitude and longitude are converted to numbers if they exist
+            const lat = d.latitude !== null ? parseFloat(d.latitude) : null;
+            const lng = d.longitude !== null ? parseFloat(d.longitude) : null;
+            
+            return {
+                imageUrl: d.img,
+                name: d.name,
+                latitude: lat,  // Store as number or null
+                longitude: lng, // Store as number or null
+                date: new Date(d.created_at).toLocaleDateString(), // Format the date properly
+                location: (lat !== null && lng !== null) ? 
+                    `${lat.toFixed(4)}, ${lng.toFixed(4)}` : 
+                    'Location unknown'
+            };
+        });
         
-        // Get unique flowers for collection
+        // Rest of your existing code...
         const collection = await db.any(`
             SELECT DISTINCT ON (flowers.id)
                 flowers.id,
@@ -220,6 +235,7 @@ app.get('/profile', requireLogin, async (req, res) => {
         
         // Render with data
         res.render('pages/profile', {
+            title: 'Profile', // Add this to set the page title
             user: {
                 ...req.session.user,
                 discoveryCount: formattedDiscoveries.length,
@@ -233,6 +249,7 @@ app.get('/profile', requireLogin, async (req, res) => {
     } catch (error) {
         console.error('Error retrieving profile data:', error);
         res.render('pages/profile', {
+            title: 'Profile',
             user: {
                 ...req.session.user,
                 discoveryCount: 0,
